@@ -1686,6 +1686,34 @@ body.light-mode .watchlist-menu-popover {
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    transition: background 0.2s ease;
+}
+
+/* Light Mode diana background override */
+body.light-mode .viga-radar-card {
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .viga-radar-screen {
+    background: #ffffff !important;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+body.light-mode .radar-ring {
+    border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+body.light-mode .radar-crosshair-h,
+body.light-mode .radar-crosshair-v {
+    background: rgba(225, 29, 72, 0.35) !important;
+}
+
+body.light-mode .radar-sweep-arm {
+    background: radial-gradient(circle at top right, rgba(225, 29, 72, 0.2), transparent 70%) !important;
+    border-right: 2px solid rgba(225, 29, 72, 0.9) !important;
+    border-top: 1px solid rgba(225, 29, 72, 0.4) !important;
 }
 
 .radar-ring {
@@ -2022,6 +2050,29 @@ body.light-mode .watchlist-menu-popover {
     .viga-cta-banner {
         flex-direction: column;
         align-items: flex-start;
+    }
+}
+
+/* Footer Navigation Styling */
+.viga-footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 48px;
+    padding-bottom: 48px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+@media (max-width: 992px) {
+    .viga-footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 36px;
+    }
+}
+
+@media (max-width: 576px) {
+    .viga-footer-grid {
+        grid-template-columns: 1fr;
+        gap: 28px;
     }
 }
 

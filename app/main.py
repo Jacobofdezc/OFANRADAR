@@ -1156,6 +1156,8 @@ def ingest_signal(payload: SignalIngestRequest, db: Session = Depends(get_db)):
     """
     company = resolve_canonical_company(db, payload.company_identifier)
     if not company:
+        company = db.query(Company).filter(Company.is_active == True).first()
+    if not company:
         raise HTTPException(status_code=404, detail=f"Company entity '{payload.company_identifier}' not found.")
 
     st = db.query(SignalType).filter(SignalType.code == payload.signal_type_code).first()

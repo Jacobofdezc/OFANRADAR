@@ -25,6 +25,10 @@
         </a>
 
         <div class="header-actions">
+            <a href="/precios" class="nav-link" style="font-weight: 600; font-size: 0.88rem; color: var(--text-muted); margin-right: 6px;">
+                <i class="fa-solid fa-tag" style="color: var(--brand-gold);"></i> Precios
+            </a>
+
             <!-- Theme Toggle Button -->
             <button class="btn btn-outline" id="theme-toggle-btn" title="Cambiar tema de color" style="padding: 7px 10px;">
                 <i class="fa-solid fa-sun" id="theme-icon"></i>
@@ -323,17 +327,65 @@
             </div>
         </section>
 
-        <!-- FOOTER MINIMALISTA -->
-        <footer style="padding: 40px 24px; border-top: 1px solid var(--border-color); margin-top: 60px;">
-            <div class="viga-container" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: var(--text-dim);">
-                <div>
-                    <strong style="color: var(--text-main);">OFANRADAR</strong> &middot; Inteligencia operativa de mercado explicable
+        <!-- FOOTER COMPLETO CON LOGO Y NAVEGACIÓN -->
+        <footer style="padding: 70px 48px 40px 48px; border-top: 1px solid var(--border-color); margin-top: 80px; background: transparent;">
+            <div class="viga-container">
+                <div class="viga-footer-grid">
+                    <!-- Columna 1: Brand + Description -->
+                    <div>
+                        <a href="/" style="text-decoration: none; display: inline-block; margin-bottom: 12px;">
+                            <img src="/static/img/logo-dark.jpg?v=9.1" alt="OFANRADAR" class="brand-logo-img logo-dark-mode" style="height: 38px;">
+                            <img src="/static/img/logo-light.jpg?v=9.1" alt="OFANRADAR" class="brand-logo-img logo-light-mode" style="height: 38px;">
+                        </a>
+                        <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; max-width: 320px; margin-top: 6px;">
+                            Inteligencia operativa de mercado & terminal B2B. Detecta intenciones de expansión, contratación y cambio tecnológico antes que tu competencia.
+                        </p>
+                        <div style="margin-top: 16px; font-size: 0.78rem; color: var(--accent-green); display: flex; align-items: center; gap: 8px; font-family: var(--font-code);">
+                            <span class="pulse-dot"></span> Sistemas operativos &middot; Monitorización continua
+                        </div>
+                    </div>
+
+                    <!-- Columna 2: Producto -->
+                    <div>
+                        <h4 style="font-family: var(--font-heading); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-main); margin-bottom: 16px;">Producto</h4>
+                        <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem;">
+                            <li><a href="/app" style="color: var(--text-muted); text-decoration: none;">Terminal de Empresas</a></li>
+                            <li><a href="/precios" style="color: var(--text-muted); text-decoration: none;">Planes y Precios</a></li>
+                            <li><a href="/#señales" style="color: var(--text-muted); text-decoration: none;">El Método Radar</a></li>
+                            <li><a href="/#trazabilidad" style="color: var(--text-muted); text-decoration: none;">Trazabilidad Explicable</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Columna 3: Soluciones -->
+                    <div>
+                        <h4 style="font-family: var(--font-heading); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-main); margin-bottom: 16px;">Soluciones</h4>
+                        <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem;">
+                            <li><a href="/#equipos" style="color: var(--text-muted); text-decoration: none;">Banca Corporativa</a></li>
+                            <li><a href="/#equipos" style="color: var(--text-muted); text-decoration: none;">Fondos & Private Equity</a></li>
+                            <li><a href="/#equipos" style="color: var(--text-muted); text-decoration: none;">Ventas B2B e Inmobiliario</a></li>
+                            <li><a href="/api/docs" style="color: var(--text-muted); text-decoration: none;">API Programática</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Columna 4: Legal & Cumplimiento -->
+                    <div>
+                        <h4 style="font-family: var(--font-heading); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-main); margin-bottom: 16px;">Legal</h4>
+                        <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem;">
+                            <li><a href="/privacy" style="color: var(--text-muted); text-decoration: none;">Privacidad</a></li>
+                            <li><a href="/terms" style="color: var(--text-muted); text-decoration: none;">Términos de Servicio</a></li>
+                            <li><a href="/privacy" style="color: var(--text-muted); text-decoration: none;">Cumplimiento RGPD</a></li>
+                        </ul>
+                    </div>
                 </div>
-                <div style="display: flex; gap: 16px;">
-                    <a href="/precios" style="color: var(--text-muted); text-decoration: none;">Precios</a>
-                    <a href="/app" style="color: var(--text-muted); text-decoration: none;">Terminal</a>
-                    <a href="/privacy" style="color: var(--text-muted); text-decoration: none;">Privacidad</a>
-                    <a href="/terms" style="color: var(--text-muted); text-decoration: none;">Términos</a>
+
+                <!-- Copyright final -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; font-size: 0.8rem; color: var(--text-dim);">
+                    <div>
+                        &copy; 2026 <strong>OFANRADAR</strong>. Todos los derechos reservados.
+                    </div>
+                    <div style="display: flex; gap: 16px;">
+                        <span>España &middot; Unión Europea</span>
+                    </div>
                 </div>
             </div>
         </footer>

@@ -353,6 +353,11 @@ async function loadCompanyList() {
         }
 
         container.innerHTML = '';
+        const companyExists = companies.some(c => c.id === currentCompanyId);
+        if (!companyExists && companies.length > 0) {
+            selectCompany(companies[0].id);
+        }
+
         companies.forEach((company, index) => {
             const card = document.createElement('div');
             card.className = `company-card ${company.id === currentCompanyId ? 'active' : ''}`;
@@ -388,10 +393,6 @@ async function loadCompanyList() {
 
             card.addEventListener('click', () => selectCompany(company.id));
             container.appendChild(card);
-
-            if (index === 0 && !currentCompanyId) {
-                selectCompany(company.id);
-            }
         });
     } catch (err) {
         console.error('Failed to load companies:', err);
