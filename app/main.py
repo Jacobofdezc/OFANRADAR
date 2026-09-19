@@ -1162,7 +1162,22 @@ def ingest_signal(payload: SignalIngestRequest, db: Session = Depends(get_db)):
 
     st = db.query(SignalType).filter(SignalType.code == payload.signal_type_code).first()
     if not st:
-        raise HTTPException(status_code=400, detail=f"Invalid signal_type_code '{payload.signal_type_code}'.")
+        from app.config import SIGNAL_CATALOG
+        if payload.signal_type_code in SIGNAL_CATALOG:
+            info = SIGNAL_CATALOG[payload.signal_type_code]
+            st = SignalType(
+                code=payload.signal_type_code,
+                name=info["name"],
+                vector_category=info["vector_category"],
+                base_weight=info["base_weight"],
+                half_life_days=info["half_life_days"],
+                description=info["description"],
+            )
+            db.add(st)
+            db.commit()
+            db.refresh(st)
+        else:
+            raise HTTPException(status_code=400, detail=f"Invalid signal_type_code '{payload.signal_type_code}'.")
 
     detected_at = payload.detected_at or datetime.datetime.utcnow()
 

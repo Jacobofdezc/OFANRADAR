@@ -89,6 +89,13 @@ SIGNAL_CATALOG: Dict[str, Dict[str, Any]] = {
         "half_life_days": 30,
         "description": "Eliminación de planes gratuitos o subida de precios en planes Enterprise",
     },
+    "REGISTRY_CHANGE": {
+        "name": "Inscripción en Registro Mercantil / BORME",
+        "vector_category": "expansion_intent",
+        "base_weight": 40.0,
+        "half_life_days": 90,
+        "description": "Ampliación de capital, nombramientos o cambio de domicilio social en BORME",
+    },
 }
 
 # Saturation scaling gamma factor for Score = 100 * (1 - exp(-gamma * Sum_W))
