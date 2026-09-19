@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  business-radar:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: business-radar-terminal
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - JWT_SECRET_KEY=business-radar-institutional-production-secret-2026
+      - DATABASE_URL=sqlite:////app/radar.db
+    volumes:
+      - radar-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  radar-data:
+    driver: local

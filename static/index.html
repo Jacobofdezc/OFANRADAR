@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OFANRADAR | Terminal de Inteligencia Operativa de Mercado</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/favicon.png?v=9.1">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/static/css/style.css?v=9.1">
+</head>
+<body class="dark-mode">
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <a href="/" class="brand" style="text-decoration: none;">
+            <img src="/static/img/logo-dark.jpg?v=9.1" alt="OFANRADAR" class="brand-logo-img logo-dark-mode">
+            <img src="/static/img/logo-light.jpg?v=9.1" alt="OFANRADAR" class="brand-logo-img logo-light-mode">
+            <span class="brand-subtitle hidden-mobile" style="color: var(--text-muted); font-weight: 500; border-left: 1px solid var(--border-color); padding-left: 10px; margin-left: 2px;">Terminal Operativa</span>
+        </a>
+
+        <div class="header-actions">
+            <!-- Bloque 10: Trial & Subscription Status Badge -->
+            <div class="user-profile-badge" id="trial-status-badge" style="background: rgba(225, 29, 72, 0.1); border: 1px solid rgba(225, 29, 72, 0.3); color: var(--accent-red); cursor: pointer;" onclick="openUpgradeModal()" title="Ver Estado de Suscripción / Trial">
+                <i class="fa-solid fa-bolt" style="color:var(--accent-red);"></i> <span id="trial-status-text">7 Días de Trial</span>
+            </div>
+
+            <!-- Bloque 7: User Profile & Auth Widget -->
+            <div class="user-profile-badge" id="user-profile-widget" onclick="openAuthModal()" title="Gestionar Sesión u Organización">
+                <span class="user-org-tag" id="user-org-name"><i class="fa-solid fa-building"></i> Acme Capital</span>
+                <span class="user-role-tag" id="user-role-name">ADMIN</span>
+            </div>
+
+            <!-- Bloque 8: Alertas & Webhooks Proactivos Button -->
+            <button class="btn btn-outline" id="btn-open-alerts-modal" onclick="openAlertsModal()">
+                <i class="fa-solid fa-bell" style="color:var(--accent-amber);"></i> Alertas & Webhooks
+            </button>
+
+            <!-- Feature 10 Auto-Enrichment Button -->
+            <button class="btn btn-outline" id="btn-open-enrich-modal" onclick="openEnrichModal()">
+                <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--accent-cyan);"></i> Auto-Enriquecer Dominio
+            </button>
+            <!-- Theme Toggle Button (Icon Only) -->
+            <button class="btn btn-outline" id="theme-toggle-btn" title="Cambiar tema de color" style="padding: 7px 10px;">
+                <i class="fa-solid fa-sun" id="theme-icon"></i>
+            </button>
+            <button class="btn btn-primary" id="btn-open-query-modal" style="background: var(--text-main); color: var(--bg-dark);">
+                <i class="fa-solid fa-sliders"></i> Filtros Avanzados
+            </button>
+        </div>
+    </header>
+
+    <!-- ====================================================================
+         VIEW 2: TERMINAL DE EMPRESAS STANDALONE Y TOTALMENTE EXPANSIVO (#terminal-view)
+         ==================================================================== -->
+    <div id="terminal-view">
+        <!-- FULL-WIDTH MASSIVE STANDALONE TERMINAL LAYOUT -->
+        <div class="terminal-layout" style="width: 100%; height: calc(100vh - 64px);">
+            <!-- Sidebar: Filter & Company Directory -->
+            <aside class="sidebar">
+                <div class="sidebar-header" style="padding: 12px 14px;">
+                    <div class="sidebar-tabs-row" style="margin-bottom: 8px;">
+                        <button class="sidebar-tab-btn active" id="tab-btn-directory" onclick="switchSidebarTab('directory')">
+                            <i class="fa-solid fa-building-columns"></i> Empresas
+                        </button>
+                        <button class="sidebar-tab-btn" id="tab-btn-watchlists" onclick="switchSidebarTab('watchlists')">
+                            <i class="fa-solid fa-star"></i> Watchlists
+                        </button>
+                    </div>
+
+                    <!-- Search Box -->
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="company-search-input" placeholder="Buscar nombre, dominio, CIF/NIF...">
+                    </div>
+
+                    <!-- Quick Collapsible Filter Button -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+                        <button class="btn btn-outline btn-sm" id="btn-toggle-filters" onclick="toggleSidebarFilters()" style="padding: 3px 8px; font-size: 0.76rem; border-color: rgba(190, 18, 60, 0.3); color: var(--brand-gold);">
+                            <i class="fa-solid fa-sliders"></i> <span id="filters-toggle-label">Mostrar Filtros Avanzados</span>
+                        </button>
+                        <button class="btn btn-outline btn-sm" id="btn-export-csv" onclick="exportCompaniesCSV()" style="padding: 3px 8px; font-size: 0.76rem;" title="Exportar directorio CSV">
+                            <i class="fa-solid fa-file-csv"></i> CSV
+                        </button>
+                    </div>
+                    
+                    <!-- Filter Dropdowns & Search (Directory View) - Collapsible Panel -->
+                    <div class="filter-controls hidden" id="sidebar-filters-panel" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-color);">
+                        <div class="dropdown-filters-row">
+                            <div class="filter-group">
+                                <label><i class="fa-solid fa-industry"></i> Sector</label>
+                                <select id="filter-industry-select" class="custom-select">
+                                    <option value="">Todos los sectores</option>
+                                    <option value="Logistics">Logística y Transporte</option>
+                                    <option value="Software">Software & SaaS</option>
+                                    <option value="Automotive">Automoción y Flotas</option>
+                                    <option value="Biotechnology">Biotecnología</option>
+                                    <option value="Energy">Energía e Infraestructura</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-group">
+                                <label><i class="fa-solid fa-globe"></i> País</label>
+                                <select id="filter-country-select" class="custom-select">
+                                    <option value="">Todos los países</option>
+                                    <option value="ES">🇪🇸 España</option>
+                                    <option value="IT">🇮🇹 Italia</option>
+                                    <option value="SE">🇸🇪 Suecia</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="dropdown-filters-row" style="margin-top: 8px;">
+                            <div class="filter-group">
+                                <label><i class="fa-solid fa-bolt"></i> Evento Reciente (7d)</label>
+                                <select id="filter-event-select" class="custom-select">
+                                    <option value="">Todos los eventos</option>
+                                    <option value="JOB_POSTING_SURGE">💼 Job Posting Surge</option>
+                                    <option value="REGISTRY_CHANGE">📜 Registro Oficial (BORME)</option>
+                                    <option value="REAL_ESTATE_FILING">🏢 Licencia Expansión</option>
+                                    <option value="DOM_PRICING_CHANGED">💶 Cambio Precios Web</option>
+                                    <option value="TECH_STACK_MIGRATION">💻 Cambio Tech Stack</option>
+                                    <option value="CREDIT_RATING_DOWNGRADE">⚠️ Riesgo Crediticio</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-group">
+                                <label><i class="fa-solid fa-gauge-high"></i> Score Mín: <span id="score-min-val" style="color: var(--brand-gold); font-weight:700;">0</span></label>
+                                <input type="range" id="filter-score-min" min="0" max="100" value="0" step="5" class="custom-range">
+                            </div>
+                        </div>
+
+                        <div class="filter-action-buttons" style="margin-top: 8px; display: flex; gap: 8px;">
+                            <button class="btn btn-outline btn-sm" id="btn-reset-filters" style="flex: 1;" onclick="resetAllFilters()">
+                                <i class="fa-solid fa-rotate-left"></i> Limpiar Filtros
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Directory Container -->
+                <div class="company-list" id="company-list-container">
+                    <!-- Dynamically populated company cards -->
+                    <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Cargando empresas...</div>
+                </div>
+
+                <!-- Watchlists Sidebar Container (Hidden by default) -->
+                <div class="company-list hidden" id="watchlist-list-container">
+                    <!-- Dynamically populated watchlist cards -->
+                </div>
+
+                <div class="sidebar-footer">
+                    <div class="system-status-mini green">
+                        <span class="pulse-dot"></span> Captura activa
+                    </div>
+                    <div class="system-status-mini blue">
+                        <span class="status-dot-blue"></span> Radar de Intención v9.0
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Inspection Dashboard -->
+            <main class="main-dashboard" id="main-dashboard">
+
+                <!-- Global Instant Business Analyzer Search Bar -->
+                <div class="on-demand-search-bar" style="margin-bottom: 14px; display: flex; gap: 10px; background: var(--bg-card); padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                        <i class="fa-solid fa-magnifying-glass" style="color: var(--brand-gold);"></i>
+                        <input type="text" id="global-on-demand-input" placeholder="Analizar CUALQUIER empresa por nombre o dominio (ej: Glovo, Mercadona, Cabify, Factorial)..." style="width: 100%; background: transparent; border: none; color: var(--text-main); font-size: 0.85rem; outline: none;" onkeydown="if(event.key==='Enter') handleGlobalOnDemandSubmit()">
+                    </div>
+                    <button class="btn btn-primary btn-sm" id="btn-global-on-demand" onclick="handleGlobalOnDemandSubmit()" style="white-space: nowrap; background: var(--brand-gold); color: #ffffff;">
+                        <i class="fa-solid fa-bolt"></i> Analizar Empresa
+                    </button>
+                </div>
+
+                <div id="company-detail-view" class="detail-container">
+                    <!-- Company Header Card -->
+                    <div class="card company-header-card">
+                        <div class="company-meta-left">
+                            <div class="company-title-row">
+                                <div class="company-logo-avatar" id="detail-company-logo-avatar">
+                                    <img id="detail-company-logo" src="" alt="Logo" onerror="this.style.display='none'">
+                                </div>
+                                <h1 id="detail-company-name">Seleccione una empresa</h1>
+                                <span class="badge badge-industry" id="detail-company-industry">Empresa</span>
+                                
+                                <!-- Watchlist Dropdown -->
+                                <div class="watchlist-action-wrapper" style="position: relative; display: inline-block;">
+                                    <button class="btn btn-outline btn-sm" id="btn-watchlist-dropdown" onclick="toggleWatchlistMenu()">
+                                        <i class="fa-solid fa-star"></i> <span id="watchlist-btn-text">Watchlists</span> <i class="fa-solid fa-chevron-down" style="font-size: 0.75rem;"></i>
+                                    </button>
+                                    <div class="watchlist-menu-popover hidden" id="watchlist-menu-popover">
+                                        <div class="watchlist-menu-header">Añadir a Lista de Vigilancia</div>
+                                        <div id="watchlist-checkbox-list" class="watchlist-checkbox-list">
+                                            <!-- Checkboxes injected by JS -->
+                                        </div>
+                                        <div class="watchlist-menu-footer">
+                                            <button class="btn btn-primary btn-sm btn-full" onclick="openCreateWatchlistModal()">
+                                                <i class="fa-solid fa-plus"></i> Nueva Lista
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="company-attributes-grid">
+                                <div class="attr-item"><i class="fa-solid fa-globe"></i> Web: <a href="#" id="detail-company-domain" target="_blank">-</a></div>
+                                <div class="attr-item"><i class="fa-solid fa-id-card"></i> CIF / NIF: <strong id="detail-company-tax-id">-</strong></div>
+                                <div class="attr-item"><i class="fa-solid fa-location-dot"></i> Sede: <span id="detail-company-hq">-</span></div>
+                                <div class="attr-item"><i class="fa-solid fa-users"></i> Empleados: <span id="detail-company-size">-</span></div>
+                            </div>
+                        </div>
+                        <div class="company-meta-right">
+                            <div class="composite-gauge-box">
+                                <span class="gauge-label">PUNTUACIÓN DE INTENCIÓN GLOBAL</span>
+                                <div class="gauge-value" id="detail-composite-score" style="color: var(--brand-gold);">00</div>
+                                <span class="badge badge-intent" id="detail-primary-label">Evaluando señales...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Feature 13: Executive Brief Synthesis Agent (LLM 3-Paragraph Brief) -->
+                    <div class="card executive-brief-card" id="executive-brief-container" style="border-left-color: var(--brand-gold);">
+                        <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">
+                            <h3><i class="fa-solid fa-feather-pointed" style="color:var(--brand-gold);"></i> Executive Brief (Síntesis de Inteligencia IA)</h3>
+                            <span class="badge badge-industry" id="brief-date-tag">Síntesis Institucional</span>
+                        </div>
+                        <div class="brief-paragraphs">
+                            <div class="brief-block">
+                                <span class="brief-label"><i class="fa-solid fa-chart-line"></i> 1. Fase de Crecimiento & Estado Operativo:</span>
+                                <p class="brief-p" id="brief-p1">Seleccione una empresa para generar la síntesis ejecutiva...</p>
+                            </div>
+                            <div class="brief-block" style="margin-top: 10px;">
+                                <span class="brief-label"><i class="fa-solid fa-laptop-code"></i> 2. Movimientos Tecnológicos & Proveedores:</span>
+                                <p class="brief-p" id="brief-p2"></p>
+                            </div>
+                            <div class="brief-block highlight" style="margin-top: 10px; background: rgba(190, 18, 60, 0.04); border-color: rgba(190, 18, 60, 0.25);">
+                                <span class="brief-label"><i class="fa-solid fa-bullseye" style="color:var(--brand-gold);"></i> 3. Oportunidad Comercial & Recomendación:</span>
+                                <p class="brief-p" id="brief-p3"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Clean Structured Tabs Navigation -->
+                    <div class="dashboard-tabs" style="margin-top: 16px;">
+                        <button class="tab-btn active" data-tab="tab-overview">
+                            <i class="fa-solid fa-chart-pie"></i> 1. Intent Scores & Resumen
+                        </button>
+                        <button class="tab-btn" data-tab="tab-timeline">
+                            <i class="fa-solid fa-bolt"></i> 2. Señales & Justificación (<span id="tab-signal-count">0</span>)
+                        </button>
+                        <button class="tab-btn" data-tab="tab-tech">
+                            <i class="fa-solid fa-server"></i> 3. Perfil Tecnológico & Gráfico
+                        </button>
+                        <button class="tab-btn" data-tab="tab-simulator">
+                            <i class="fa-solid fa-vial"></i> 4. Simulador & DOM Diff
+                        </button>
+                        <button class="tab-btn" data-tab="tab-resolution">
+                            <i class="fa-solid fa-id-card"></i> 5. Identificador CIF / NIF
+                        </button>
+                    </div>
+
+                    <!-- TAB 1: OVERVIEW & INDICATORS (CLEAN & UNCLUTTERED) -->
+                    <div class="tab-content active" id="tab-overview">
+                        <!-- 5 Intent Vector Cards -->
+                        <div class="intent-vectors-grid">
+                            <div class="vector-card card tooltip-target">
+                                <div class="vector-header">
+                                    <span class="vector-title"><i class="fa-solid fa-rocket"></i> Expansión Regional</span>
+                                    <span class="vector-score" id="score-expansion">0</span>
+                                </div>
+                                <div class="progress-bar-bg"><div class="progress-bar-fill expansion" id="bar-expansion" style="width: 0%;"></div></div>
+                                <p class="vector-desc">Nuevas sedes físicas, alquileres e inscripciones</p>
+                            </div>
+
+                            <div class="vector-card card tooltip-target">
+                                <div class="vector-header">
+                                    <span class="vector-title"><i class="fa-solid fa-user-tie"></i> Contratación de Personal</span>
+                                    <span class="vector-score" id="score-hiring">0</span>
+                                </div>
+                                <div class="progress-bar-bg"><div class="progress-bar-fill hiring" id="bar-hiring" style="width: 0%;"></div></div>
+                                <p class="vector-desc">Búsqueda masiva de ofertas de empleo y puestos</p>
+                            </div>
+
+                            <div class="vector-card card tooltip-target">
+                                <div class="vector-header">
+                                    <span class="vector-title"><i class="fa-solid fa-arrow-trend-up"></i> Crecimiento Corporativo</span>
+                                    <span class="vector-score" id="score-growth">0</span>
+                                </div>
+                                <div class="progress-bar-bg"><div class="progress-bar-fill growth" id="bar-growth" style="width: 0%;"></div></div>
+                                <p class="vector-desc">Nombramientos directivos y presencia en medios</p>
+                            </div>
+
+                            <div class="vector-card card tooltip-target">
+                                <div class="vector-header">
+                                    <span class="vector-title"><i class="fa-solid fa-laptop-code"></i> Cambio Tecnológico</span>
+                                    <span class="vector-score" id="score-tech">0</span>
+                                </div>
+                                <div class="progress-bar-bg"><div class="progress-bar-fill tech" id="bar-tech" style="width: 0%;"></div></div>
+                                <p class="vector-desc">Modificación de precios web y servicios Cloud</p>
+                            </div>
+
+                            <div class="vector-card card warning tooltip-target">
+                                <div class="vector-header">
+                                    <span class="vector-title"><i class="fa-solid fa-triangle-exclamation"></i> Riesgo Financiero</span>
+                                    <span class="vector-score" id="score-stress">0</span>
+                                </div>
+                                <div class="progress-bar-bg"><div class="progress-bar-fill stress" id="bar-stress" style="width: 0%;"></div></div>
+                                <p class="vector-desc">Indicadores de inestabilidad o alertas legales</p>
+                            </div>
+                        </div>
+
+                        <!-- Friendly Business Summary & Opportunity Highlight -->
+                        <div class="card business-summary-card margin-top">
+                            <div class="insight-block">
+                                <div class="insight-icon"><i class="fa-solid fa-lightbulb"></i></div>
+                                <div class="insight-text">
+                                    <h4>Diagnóstico Comercial de Oportunidad</h4>
+                                    <p id="detail-business-summary">Seleccione una empresa para ver el análisis de intención de mercado en tiempo real.</p>
+                                </div>
+                            </div>
+                            <div class="action-block">
+                                <div class="action-icon"><i class="fa-solid fa-bullseye"></i></div>
+                                <div class="action-text">
+                                    <h4>Acción Comercial Recomendada</h4>
+                                    <p id="detail-recommended-action">Cargando sugerencias estratégicas...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: SEÑALES & JUSTIFICACIÓN -->
+                    <div class="tab-content" id="tab-timeline">
+                        <!-- Explicabilidad: Por qué este Score -->
+                        <div class="card explainability-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--brand-gold);"></i> Por qué este Score (Explicabilidad & Justificación)</h3>
+                                <span class="badge badge-intent" id="explainability-score-tag">Evaluando...</span>
+                            </div>
+                            <p class="sub-header-text">Desglose cuantitativo de los factores determinantes y eventos de alta convicción registrados para esta empresa.</p>
+
+                            <div class="key-events-container" style="margin-top: 16px;">
+                                <h4 style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                                    <i class="fa-solid fa-bolt" style="color:var(--brand-gold);"></i> Eventos Clave Recientes (Altamente Significativos)
+                                </h4>
+                                <div id="key-events-list" class="key-events-list">
+                                    <!-- Populated dynamically by JS -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Historial Desplegable -->
+                        <div class="card margin-top">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-list-check"></i> Historial Completo de Señales Capturadas</h3>
+                                <p class="sub-header-text">Haga clic en cualquier evento para desplegar los detalles de la captura.</p>
+                            </div>
+
+                            <div class="accordion-container" id="signal-accordion-list">
+                                <!-- Populated with collapsible accordion items -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: PERFIL TECNOLÓGICO & GRÁFICO -->
+                    <div class="tab-content" id="tab-tech">
+                        <!-- Visual Radar Chart -->
+                        <div class="card chart-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-chart-pie"></i> Perfil Visual de Intención de Mercado</h3>
+                                <span class="window-pill">Ventana Temporal: Últimos 90 Días</span>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="intentRadarChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Stack Tech Card -->
+                        <div class="card tech-stack-card margin-top">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-server" style="color:var(--accent-cyan);"></i> Perfil Tecnológico e Infraestructura Oculta</h3>
+                                <span class="badge badge-industry" id="tech-stack-count-badge">0 Tecnologías</span>
+                            </div>
+                            <p class="sub-header-text">Detección de proveedores SaaS, infraestructura cloud, herramientas de analítica, CRM y suite corporativa.</p>
+
+                            <div id="tech-stack-content" class="tech-stack-content" style="margin-top: 16px;">
+                                <div id="tech-stack-badges-grid" class="tech-stack-badges-grid">
+                                    <!-- Populated dynamically by JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: SIMULADOR & DOM DIFF -->
+                    <div class="tab-content" id="tab-simulator">
+                        <div class="middle-analytics-grid">
+                            <!-- Presets & Simulator -->
+                            <div class="card simulator-card">
+                                <div class="card-header">
+                                    <h3><i class="fa-solid fa-satellite-dish" style="color: var(--brand-gold);"></i> Simulador Rápido de Señales Públicas</h3>
+                                    <span class="badge badge-intent"><i class="fa-solid fa-bolt"></i> Ingesta en Vivo</span>
+                                </div>
+                                <p class="simulator-intro">Seleccione un escenario predefinido o personalice un evento para simular la captura en tiempo real y recalcular los Intent Scores instantáneamente:</p>
+
+                                <!-- Preset Tiles Grid (6 Scenario Cards) -->
+                                <div class="preset-buttons-grid margin-top">
+                                    <button type="button" class="preset-tile-btn" onclick="simulatePreset('REAL_ESTATE_FILING', 'property_registry_madrid', 'Apertura de Nueva Oficina Comercial en Madrid')">
+                                        <div class="preset-tile-icon green"><i class="fa-solid fa-building"></i></div>
+                                        <div class="preset-tile-info">
+                                            <div class="preset-tile-title">Expansión Inmobiliaria</div>
+                                            <div class="preset-tile-badge">+18 Score Expansión</div>
+                                        </div>
+                                    </button>
+
+                                    <button type="button" class="preset-tile-btn" onclick="simulatePreset('REGISTRY_CHANGE', 'borme_oficial_es', 'Ampliación de Capital Registrada +2.5M€')">
+                                        <div class="preset-tile-icon purple"><i class="fa-solid fa-file-signature"></i></div>
+                                        <div class="preset-tile-info">
+                                            <div class="preset-tile-title">Registro BORME Capital</div>
+                                            <div class="preset-tile-badge">+24 Intención Global</div>
+                                        </div>
+                                    </button>
+
+                                    <button type="button" class="preset-tile-btn" onclick="simulatePreset('JOB_POSTING_SURGE', 'linkedin_careers', 'Publicación masiva de +8 empleos de desarrollo')">
+                                        <div class="preset-tile-icon blue"><i class="fa-solid fa-user-plus"></i></div>
+                                        <div class="preset-tile-info">
+                                            <div class="preset-tile-title">Contratación Masiva</div>
+                                            <div class="preset-tile-badge">+15 Hiring Intent</div>
+                                        </div>
+                                    </button>
+
+                                    <button type="button" class="preset-tile-btn" onclick="simulatePreset('DOM_PRICING_CHANGED', 'dom_diff_engine', 'Cambio estructural en la tarifa de precios web (+400%)')">
+                                        <div class="preset-tile-icon amber"><i class="fa-solid fa-tags"></i></div>
+                                        <div class="preset-tile-info">
+                                            <div class="preset-tile-title">Cambio de Tarifas Web</div>
+                                            <div class="preset-tile-badge">+22 Strategy Score</div>
+                                        </div>
+                                    </button>
+
+                                    <button type="button" class="preset-tile-btn" onclick="simulatePreset('EXEC_ROLE_ADDED', 'executive_tracker', 'Fichaje de VP of Global Sales / CRO')">
+                                        <div class="preset-tile-icon cyan"><i class="fa-solid fa-user-tie"></i></div>
+                                        <div class="preset-tile-info">
+                                            <div class="preset-tile-title">Fichaje Directivo C-Suite</div>
+                                            <div class="preset-tile-badge">+12 Executive Intent</div>
+                                        </div>
+                                    </button>
+
+                                    <button type="button" class="preset-tile-btn" onclick="simulatePreset('TECH_STACK_MIGRATION', 'cloud_dns_scanner', 'Alta de Subdominio Cloud / Salesforce Enterprise')">
+                                        <div class="preset-tile-icon red"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                                        <div class="preset-tile-info">
+                                            <div class="preset-tile-title">Migración Cloud / SaaS</div>
+                                            <div class="preset-tile-badge">+10 Tech Change</div>
+                                        </div>
+                                    </button>
+                                </div>
+
+                                <!-- Custom Event Form -->
+                                <form id="signal-ingest-form" class="ingest-form margin-top">
+                                    <h4 style="font-size:0.85rem; font-weight:700; color:var(--text-main); margin-bottom:10px;">
+                                        <i class="fa-solid fa-sliders" style="color:var(--brand-gold);"></i> Configurar Parámetros del Evento Personalizado:
+                                    </h4>
+                                    <div class="form-group">
+                                        <label>Tipo de Evento Detectado</label>
+                                        <select id="ingest-signal-code" class="custom-select">
+                                            <option value="REGISTRY_CHANGE">📋 Inscripción Oficial BORME / Registro Mercantil</option>
+                                            <option value="JOB_POSTING_SURGE">💼 Oleada de Ofertas de Empleo (+5 puestos tech)</option>
+                                            <option value="REAL_ESTATE_FILING">🏢 Inscripción Inmobiliaria de Oficina Comercial</option>
+                                            <option value="DOM_PRICING_CHANGED">🏷️ Cambio en Estructura de Precios Web</option>
+                                            <option value="NEW_BRAND_DOMAIN">🌐 Registro de Nuevo Dominio de Marca</option>
+                                            <option value="EXEC_ROLE_ADDED">👤 Incorporación Directiva (C-Suite / VP)</option>
+                                            <option value="TECH_STACK_MIGRATION">☁️ Alta de Subdominio Cloud / Salesforce</option>
+                                            <option value="CREDIT_RATING_DOWNGRADE">⚠️ Alerta de Inestabilidad Financiera</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-row margin-top">
+                                        <div class="form-group">
+                                            <label>Fuente de Captura</label>
+                                            <input type="text" id="ingest-source" value="capturador_automatico_web" class="custom-select">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Confianza de la Señal (<span id="confidence-val-badge" style="color:var(--brand-gold); font-weight:700;">95%</span>)</label>
+                                            <input type="range" id="ingest-confidence" min="0.1" max="1.0" step="0.05" value="0.95" oninput="document.getElementById('confidence-val-badge').textContent = Math.round(this.value * 100) + '%'">
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-accent btn-full margin-top" id="btn-submit-ingest-signal" style="background: var(--brand-gold); color: #ffffff;">
+                                        <i class="fa-solid fa-paper-plane"></i> Inyectar Señal y Recalcular Scores
+                                    </button>
+                                    <div id="ingest-feedback-status" class="hidden margin-top" style="font-size:0.82rem; padding:8px; border-radius:6px;"></div>
+                                </form>
+                            </div>
+
+                            <!-- DOM Diffing Demo -->
+                            <div class="card diffing-card">
+                                <div class="card-header">
+                                    <h3><i class="fa-solid fa-code-compare" style="color: var(--brand-gold);"></i> Detector de Cambios Web (DOM Diff Engine)</h3>
+                                    <span class="badge badge-industry">AI Noise Filter</span>
+                                </div>
+                                <p class="simulator-intro">Demostración interactiva de cómo la IA ignora banners/cookies y extrae cambios reales de precios e infraestructura:</p>
+
+                                <div class="diff-demo-box margin-top">
+                                    <div class="diff-version">
+                                        <span class="diff-tag old"><i class="fa-solid fa-clock-rotate-left"></i> Captura T-14d</span>
+                                        <pre class="code-block diff-code-old"><code>&lt;div class="pricing-card"&gt;
+  &lt;h3&gt;Plan Básico&lt;/h3&gt;
+  &lt;span class="price"&gt;€99/mes&lt;/span&gt;
+&lt;/div&gt;</code></pre>
+                                    </div>
+
+                                    <div class="diff-version">
+                                        <span class="diff-tag new"><i class="fa-solid fa-bolt"></i> Captura Hoy</span>
+                                        <pre class="code-block diff-code-new"><code>&lt;div class="pricing-card"&gt;
+  &lt;h3&gt;Plan Enterprise&lt;/h3&gt;
+<span class="diff-highlight-add">+ &lt;span class="price"&gt;€499/mes&lt;/span&gt;</span>
+<span class="diff-highlight-add">+ &lt;span class="feature"&gt;Soporte 24/7&lt;/span&gt;</span>
+&lt;/div&gt;</code></pre>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-outline btn-full margin-top" onclick="testDOMDiffPreview()">
+                                    <i class="fa-solid fa-play" style="color:var(--accent-green);"></i> Ejecutar Comparativa DOM Diffing
+                                </button>
+                                <div id="diff-output-result" class="diff-result-box hidden margin-top"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: ENTITY RESOLUTION LOOKUP -->
+                    <div class="tab-content" id="tab-resolution">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-magnifying-glass-location"></i> Identificador de Empresas por CIF / NIF / Dominio</h3>
+                                <p class="sub-header-text">Compruebe cómo el sistema relaciona nombres variados, dominios o NIFs mercantiles con la ficha oficial de la empresa.</p>
+                            </div>
+
+                            <div class="resolution-search-bar margin-top">
+                                <input type="text" id="resolution-input" placeholder="Ingrese CIF (ej: B87654321), dominio (ej: techscale.io) o nombre desordenado...">
+                                <button class="btn btn-primary" onclick="testEntityResolution()" style="background: var(--brand-gold); color: #ffffff;">
+                                    <i class="fa-solid fa-search"></i> Identificar Empresa
+                                </button>
+                            </div>
+
+                            <div id="resolution-result-card" class="resolution-result-card hidden margin-top">
+                                <!-- Populated with resolution details -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Query Builder Modal -->
+    <div class="modal-backdrop" id="query-modal">
+        <div class="modal-box" style="max-width: 540px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-sliders" style="color: var(--brand-gold);"></i> Filtros Avanzados por Nivel de Intención</h2>
+                <button class="modal-close" id="btn-close-query-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Preset Pills Row -->
+                <div class="filter-preset-pills-row" style="margin-bottom: 16px;">
+                    <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px;">PRESETS RÁPIDOS DE BÚSQUEDA:</span>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="applyQueryPreset(75, 50, 60, 'ES', '')">🎯 Alta Intención (>75)</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="applyQueryPreset(50, 70, 40, '', 'Software')">🚀 Crecimiento Tech</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="applyQueryPreset(60, 40, 70, '', 'Logistics')">📦 Expansión Logística</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="applyQueryPreset(0, 0, 0, '', '')">🔄 Todos los Registros</button>
+                    </div>
+                </div>
+
+                <form id="intent-query-form">
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label style="font-weight:600;">Expansión Inmobiliaria & Territorial Mínima</label>
+                            <span class="score-badge-val" id="val-query-expansion" style="font-weight:700; color:var(--brand-gold);">0</span>
+                        </div>
+                        <input type="range" id="query-min-expansion" min="0" max="100" value="0" step="5" oninput="document.getElementById('val-query-expansion').textContent = this.value">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label style="font-weight:600;">Cambio Tecnológico & Stack Mínimo</label>
+                            <span class="score-badge-val" id="val-query-tech" style="font-weight:700; color:var(--accent-purple);">0</span>
+                        </div>
+                        <input type="range" id="query-min-tech" min="0" max="100" value="0" step="5" oninput="document.getElementById('val-query-tech').textContent = this.value">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label style="font-weight:600;">Velocidad de Contratación Mínima</label>
+                            <span class="score-badge-val" id="val-query-hiring" style="font-weight:700; color:var(--accent-green);">0</span>
+                        </div>
+                        <input type="range" id="query-min-hiring" min="0" max="100" value="0" step="5" oninput="document.getElementById('val-query-hiring').textContent = this.value">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>País HQ (Código ISO)</label>
+                            <select id="query-country" class="custom-select">
+                                <option value="">Todos los Países</option>
+                                <option value="ES">🇪🇸 España (ES)</option>
+                                <option value="US">🇺🇸 Estados Unidos (US)</option>
+                                <option value="SE">🇸🇪 Suecia (SE)</option>
+                                <option value="IT">🇮🇹 Italia (IT)</option>
+                                <option value="UK">🇬🇧 Reino Unido (UK)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Sector / Industria Principal</label>
+                            <select id="query-industry" class="custom-select">
+                                <option value="">Todos los Sectores</option>
+                                <option value="Software">Software & SaaS</option>
+                                <option value="Logistics">Logística & Supply Chain</option>
+                                <option value="Biotech">Biotech & Salud</option>
+                                <option value="Fintech">Fintech & Banca</option>
+                                <option value="Real Estate">Proptech & Inmobiliario</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions" style="margin-top: 18px;">
+                        <button type="button" class="btn btn-outline" id="btn-reset-query"><i class="fa-solid fa-rotate-left"></i> Restablecer</button>
+                        <button type="submit" class="btn btn-primary" style="background: var(--brand-gold); color: #ffffff;"><i class="fa-solid fa-magnifying-glass"></i> Aplicar Filtros Avanzados</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Watchlist Modal -->
+    <div class="modal-backdrop" id="create-watchlist-modal">
+        <div class="modal-box" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-star" style="color: #f59e0b;"></i> Crear Lista de Vigilancia</h2>
+                <button class="modal-close" id="btn-close-watchlist-modal" onclick="closeCreateWatchlistModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="create-watchlist-form" onsubmit="handleCreateWatchlistSubmit(event)">
+                    <div class="form-group">
+                        <label>Nombre de la Lista</label>
+                        <input type="text" id="watchlist-name-input" placeholder="ej: Competidores Directos, Prospectos Calientes" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción u Objetivo</label>
+                        <textarea id="watchlist-desc-input" placeholder="ej: Seguimiento prioritario para Q4..." rows="2" class="custom-textarea"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Color de Etiqueta</label>
+                        <div class="color-picker-row">
+                            <input type="color" id="watchlist-color-input" value="#ef4444" style="height: 38px; width: 60px; cursor: pointer; border: none; background: transparent;">
+                            <span class="sub-header-text" style="align-self: center;">Personalizar color para el Terminal</span>
+                        </div>
+                    </div>
+                    <div class="modal-actions" style="margin-top: 15px;">
+                        <button type="button" class="btn btn-outline" onclick="closeCreateWatchlistModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" style="background: var(--brand-gold); color: #ffffff;"><i class="fa-solid fa-plus"></i> Crear Lista</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature 10: Auto-Enrichment Modal -->
+    <div class="modal-backdrop" id="enrich-domain-modal">
+        <div class="modal-box" style="max-width: 480px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--accent-cyan);"></i> Auto-Enriquecer Nuevo Dominio</h2>
+                <button class="modal-close" onclick="closeEnrichModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="enrich-domain-form" onsubmit="handleEnrichSubmit(event)">
+                    <p class="sub-header-text" style="margin-bottom: 12px;">
+                        Ingrese el dominio de cualquier empresa (ej: <code>shopify.com</code>, <code>logistics.es</code>, <code>acme.io</code>).
+                        El sistema extraerá automáticamente su logotipo oficial, sector, plantilla y calculará el score inicial.
+                    </p>
+                    <div class="form-group">
+                        <label>Dominio de la Empresa</label>
+                        <input type="text" id="enrich-domain-input" placeholder="ej: shopify.com" required>
+                    </div>
+                    <div id="enrich-result-status" class="hidden" style="margin-top: 10px; font-size: 0.85rem;"></div>
+                    <div class="modal-actions" style="margin-top: 15px;">
+                        <button type="button" class="btn btn-outline" onclick="closeEnrichModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="btn-submit-enrich" style="background: var(--brand-gold); color: #ffffff;"><i class="fa-solid fa-bolt"></i> Enriquecer & Registrar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bloque 7: Modal Autenticación JWT & Multi-Tenant -->
+    <div class="modal-backdrop" id="auth-modal">
+        <div class="modal-box" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-shield-halved" style="color: var(--accent-cyan);"></i> Autenticación & Organización SaaS</h2>
+                <button class="modal-close" onclick="closeAuthModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="auth-tabs-row" style="display:flex; gap:10px; margin-bottom:16px;">
+                    <button class="tab-btn active" id="auth-tab-login" onclick="switchAuthTab('login')">Iniciar Sesión</button>
+                    <button class="tab-btn" id="auth-tab-register" onclick="switchAuthTab('register')">Nueva Organización</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="auth-login-form" onsubmit="handleAuthLoginSubmit(event)">
+                    <div class="demo-accounts-pill-box" style="margin-bottom: 12px; padding: 10px; background: rgba(0,229,255,0.06); border-radius: 8px; font-size: 0.8rem;">
+                        <span style="font-weight:700; color:var(--accent-cyan);"><i class="fa-solid fa-key"></i> Cuentas Demo Rápidas:</span>
+                        <div style="display:flex; gap:8px; margin-top:6px;">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="fillDemoAccount('admin@radar.com', 'admin123')">🔑 Admin (Acme)</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="fillDemoAccount('analyst@radar.com', 'analyst123')">💼 Analista PE</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Correo Electrónico</label>
+                        <input type="email" id="auth-login-email" placeholder="admin@radar.com" required>
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label>Contraseña</label>
+                        <input type="password" id="auth-login-password" placeholder="••••••••" required>
+                    </div>
+                    <div id="auth-login-status" class="hidden" style="margin-top: 10px; font-size: 0.85rem;"></div>
+                    <div class="modal-actions" style="margin-top: 15px;">
+                        <button type="button" class="btn btn-outline" onclick="closeAuthModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="btn-submit-login" style="background: var(--brand-gold); color: #ffffff;"><i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión JWT</button>
+                    </div>
+                </form>
+
+                <!-- Register Form -->
+                <form id="auth-register-form" class="hidden" onsubmit="handleAuthRegisterSubmit(event)">
+                    <div class="form-group">
+                        <label>Nombre de la Organización / Empresa Client</label>
+                        <input type="text" id="auth-reg-org" placeholder="ej: Santander Capital Partners" required>
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label>Nombre y Apellidos</label>
+                        <input type="text" id="auth-reg-name" placeholder="ej: Carlos Mendoza" required>
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label>Correo Electrónico Corporativo</label>
+                        <input type="email" id="auth-reg-email" placeholder="carlos@santander.com" required>
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label>Contraseña de Acceso</label>
+                        <input type="password" id="auth-reg-password" placeholder="Mínimo 6 caracteres" required>
+                    </div>
+                    <div id="auth-reg-status" class="hidden" style="margin-top: 10px; font-size: 0.85rem;"></div>
+                    <div class="modal-actions" style="margin-top: 15px;">
+                        <button type="button" class="btn btn-outline" onclick="closeAuthModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="btn-submit-register" style="background: var(--brand-gold); color: #ffffff;"><i class="fa-solid fa-building"></i> Crear Organización Tenant</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bloque 8: Modal Reglas de Alertas Proactivas & Webhooks -->
+    <div class="modal-backdrop" id="alerts-modal">
+        <div class="modal-box" style="max-width: 640px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-bell" style="color: var(--brand-gold);"></i> Reglas de Alerta & Webhooks Proactivos</h2>
+                <button class="modal-close" onclick="closeAlertsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="sub-header-text" style="margin-bottom: 14px;">
+                    Configure integraciones automatizadas para disparar notificaciones en tiempo real a <strong>Slack</strong>, <strong>Microsoft Teams</strong> o endpoints con firma de seguridad <strong>HMAC SHA-256</strong> cuando el Intent Score supere el umbral.
+                </p>
+
+                <!-- Active Rules Container -->
+                <div style="margin-bottom: 16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <h4 style="font-size:0.85rem; font-weight:700; color:var(--text-main);">REGLAS Y RECEPTORES ACTIVOS</h4>
+                        <span class="badge badge-industry" style="font-size:0.68rem;">Auto-Retry Enabled</span>
+                    </div>
+                    <div id="alerts-rules-list" class="alerts-rules-list" style="display:flex; flex-direction:column; gap:8px; max-height:180px; overflow-y:auto;">
+                        <!-- JS Injects active rules -->
+                    </div>
+                </div>
+
+                <!-- Create Rule Form -->
+                <form id="create-alert-rule-form" onsubmit="handleCreateAlertRuleSubmit(event)" style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 10px; border: 1px solid var(--border-color);">
+                    <h4 style="font-size:0.85rem; font-weight:700; color:var(--brand-gold); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-plus-circle"></i> Configurar Nuevo Conector de Notificaciones
+                    </h4>
+                    
+                    <div class="form-group">
+                        <label>Nombre Identificador de la Regla</label>
+                        <input type="text" id="alert-rule-name" placeholder="ej: Alerta Prospectos Calientes (>75 Score)" required class="custom-select">
+                    </div>
+
+                    <div class="form-row margin-top">
+                        <div class="form-group">
+                            <label>Canal de Salida</label>
+                            <select id="alert-rule-channel" class="custom-select" onchange="updateWebhookChannelPlaceholder(this.value)">
+                                <option value="SLACK">💬 Slack Incoming Webhook</option>
+                                <option value="TEAMS">📢 Microsoft Teams Connector</option>
+                                <option value="WEBHOOK">🌐 Webhook Estándar JSON (HMAC Signature)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Umbral Mínimo Score (<span id="alert-score-badge-val" style="color:var(--brand-gold); font-weight:700;">70</span>)</label>
+                            <input type="range" id="alert-rule-score" min="0" max="100" value="70" step="5" oninput="document.getElementById('alert-score-badge-val').textContent = this.value">
+                        </div>
+                    </div>
+
+                    <div class="form-group margin-top">
+                        <label>Endpoint / Webhook Target URL</label>
+                        <input type="url" id="alert-rule-url" placeholder="https://hooks.slack.com/services/T00000000/B00000000/XXXXX" required class="custom-select">
+                    </div>
+
+                    <div class="form-group margin-top">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <label>Secret Key (Firma HMAC SHA-256 en header <code>X-Radar-Signature</code>)</label>
+                            <button type="button" class="btn btn-outline btn-sm" style="padding:1px 6px; font-size:0.7rem;" onclick="generateRandomHMACSecret()">⚡ Generar Key</button>
+                        </div>
+                        <input type="text" id="alert-rule-secret" placeholder="radar-secret-key-2026" class="custom-select">
+                    </div>
+
+                    <div id="create-alert-status" class="hidden margin-top" style="font-size: 0.85rem;"></div>
+
+                    <div class="modal-actions" style="margin-top: 15px;">
+                        <button type="button" class="btn btn-outline" onclick="closeAlertsModal()">Cerrar</button>
+                        <button type="submit" class="btn btn-primary" id="btn-submit-alert-rule" style="background: var(--brand-gold); color: #ffffff;"><i class="fa-solid fa-check"></i> Guardar Regla y Probar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bloque 10: Modal Upgrade a Premium -->
+    <div class="modal-backdrop" id="upgrade-modal">
+        <div class="modal-box" style="max-width: 480px; text-align: center;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-crown" style="color: var(--brand-gold);"></i> Desbloquear Plan Pro Terminal</h2>
+                <button class="modal-close" onclick="closeUpgradeModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding-top: 10px;">
+                <p class="sub-header-text" style="margin-bottom: 20px;">
+                    Tu prueba gratuita de 7 días ha finalizado o requiere suscripción activa para acceder a Intent Scores ilimitados, resúmenes IA y exportación CSV.
+                </p>
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                    <div style="font-size: 1.8rem; font-weight: 800; color: white;">$99 <span style="font-size: 0.9rem; color: var(--text-muted);">/mes</span></div>
+                    <div style="font-size: 0.85rem; color: #10b981; margin-top: 4px; font-weight: 600;">Plan Pro Terminal & AI Intelligence</div>
+                </div>
+                <button class="btn btn-primary btn-full" style="padding: 14px; font-size: 1rem; font-weight: 700; background: var(--brand-gold); color: #ffffff;" onclick="handleUpgradeCheckout()">
+                    <i class="fa-solid fa-credit-card"></i> Actualizar a Premium ($99/mes)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/analytics.js?v=9.0"></script>
+    <script src="/static/js/app.js?v=9.0"></script>
+</body>
+</html>

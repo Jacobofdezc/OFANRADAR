@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OFANRADAR | Inteligencia Operativa de Mercado & Terminal de Oportunidades</title>
+    <meta name="description" content="Detecta el próximo movimiento de tu mercado antes que tus competidores. OFANRADAR transforma señales públicas en inteligencia operativa.">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/favicon.png?v=9.1">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=9.1">
+</head>
+<body class="dark-mode">
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <a href="/" class="brand" style="text-decoration: none;">
+            <img src="/static/img/logo-dark.jpg?v=9.1" alt="OFANRADAR" class="brand-logo-img logo-dark-mode">
+            <img src="/static/img/logo-light.jpg?v=9.1" alt="OFANRADAR" class="brand-logo-img logo-light-mode">
+            <span class="brand-subtitle hidden-mobile" style="color: var(--text-muted); font-weight: 500; border-left: 1px solid var(--border-color); padding-left: 10px; margin-left: 2px;">Inteligencia Operativa</span>
+        </a>
+
+        <div class="header-actions">
+            <!-- Theme Toggle Button -->
+            <button class="btn btn-outline" id="theme-toggle-btn" title="Cambiar tema de color" style="padding: 7px 10px;">
+                <i class="fa-solid fa-sun" id="theme-icon"></i>
+            </button>
+
+            <a href="/app" class="btn btn-primary" style="background: var(--text-main); color: var(--bg-dark); padding: 10px 20px; font-weight: 800; border-radius: 8px; text-decoration: none;">
+                <i class="fa-solid fa-terminal"></i> Acceder a la Terminal
+            </a>
+        </div>
+    </header>
+
+    <!-- LANDING SHOWCASE MINIMALISTA -->
+    <div id="landing-view" style="padding-top: 20px;">
+        <!-- HERO SHOWCASE SECTION -->
+        <section class="viga-nexo-hero">
+            <div class="viga-hero-grid">
+                <div>
+                    <h1 class="viga-hero-title">
+                        Detecta el próximo movimiento de tu mercado <span class="gold-glow">antes que tus competidores.</span>
+                    </h1>
+                    <p class="viga-hero-desc">
+                        Radar ve lo que viene con inteligencia operativa explicable para anticipar cada oportunidad comercial.
+                    </p>
+                    <p class="viga-hero-subdesc">
+                        Transformamos contratación tech, publicaciones BORME, registros de marca, modificaciones en la web y nombramientos directivos en una lectura cuantitativa clara de la intención de compra.
+                    </p>
+                    <div class="viga-hero-actions">
+                        <a href="/app" class="btn btn-primary" style="background: var(--text-main); color: var(--bg-dark); padding: 14px 28px; font-weight:800; font-size: 1rem; border-radius: 8px; text-decoration: none;">
+                            <i class="fa-solid fa-terminal"></i> Abrir Terminal de Empresas
+                        </a>
+                        <a href="/precios" class="btn btn-outline" style="padding: 14px 24px; font-size: 0.95rem; border-radius: 8px; text-decoration: none;">
+                            <i class="fa-solid fa-tag"></i> Ver Planes y Precios ($99/mes)
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Radar HUD Graphic Card (Live Target Visualizer) -->
+                <div class="viga-radar-card">
+                    <div class="viga-radar-card-header">
+                        <div>
+                            <div class="text-eyebrow" style="font-size:0.68rem;"><i class="fa-solid fa-radar"></i> Radar de Intención</div>
+                            <div style="font-size: 1.1rem; font-weight: 700; font-family: var(--font-heading); color: var(--text-main); margin-top:2px;">Radar / 00481</div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted);">Empresa privada &middot; España &middot; Tecnología</div>
+                        </div>
+                        <span class="badge badge-intent" style="background: rgba(190, 18, 60, 0.15); color: var(--brand-gold); border: 1px solid rgba(190, 18, 60, 0.3);">ACTIVA</span>
+                    </div>
+                    <div class="viga-radar-screen">
+                        <div class="radar-ring r1"></div>
+                        <div class="radar-ring r2"></div>
+                        <div class="radar-ring r3"></div>
+                        <div class="radar-crosshair-h"></div>
+                        <div class="radar-crosshair-v"></div>
+                        <div class="radar-sweep-arm"></div>
+                        <div class="radar-target-dot"></div>
+                        <span style="position: absolute; bottom: 10px; left: 14px; font-family: var(--font-code); font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em;">14d / ES</span>
+                    </div>
+                    <div class="viga-radar-metrics">
+                        <div class="viga-score-row">
+                            <div>
+                                <span class="text-eyebrow" style="font-size: 0.68rem; color: var(--text-muted);">INTENCIÓN DE EXPANSIÓN</span>
+                                <div class="viga-score-num">91 <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">/ 100</span></div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Confianza Explicable</span>
+                                <span style="font-family: var(--font-code); font-weight: 700; color: var(--accent-green); font-size: 1.1rem;">0.88</span>
+                            </div>
+                        </div>
+                        <div style="height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden;">
+                            <div style="width: 88%; height: 100%; background: var(--brand-gold); border-radius: 3px;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted);">
+                            <span><i class="fa-solid fa-sparkles" style="color:var(--brand-gold);"></i> Expansión regional &middot; Tecnología/Operaciones</span>
+                            <span style="font-family: var(--font-code); font-size: 0.72rem;"><i class="fa-solid fa-circle-dot" style="color: var(--accent-green);"></i> 5 señales correlacionadas</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: EL MÉTODO RADAR (#señales) -->
+        <section id="señales" class="viga-section">
+            <div class="viga-container">
+                <div class="viga-method-grid">
+                    <!-- TERCIO IZQUIERDO -->
+                    <div style="position: sticky; top: 100px; align-self: start;">
+                        <span class="text-eyebrow" style="font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase;">El método Radar</span>
+                        <h2 style="font-family: var(--font-heading); font-size: 2.3rem; font-weight: 800; color: var(--text-main); line-height: 1.15; margin-top: 10px; margin-bottom: 18px;">
+                            Del ruido disperso a una señal que puedes defender.
+                        </h2>
+                        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.65; margin-bottom: 24px;">
+                            Una contratación aislada no dice mucho. Cinco eventos relacionados en una ventana temporal sí. Radar los resuelve, los conecta y muestra por qué el score merece tu atención.
+                        </p>
+                        <div style="font-family: var(--font-heading); font-weight: 700; font-size: 0.88rem; color: var(--accent-red); display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; background: rgba(225, 29, 72, 0.08); border: 1px solid rgba(225, 29, 72, 0.25); border-radius: 6px;">
+                            <i class="fa-solid fa-clock-rotate-left"></i> Ventanas de 7 &middot; 14 &middot; 30 &middot; 90 días
+                        </div>
+                    </div>
+
+                    <!-- DOS TERCIOS DERECHA -->
+                    <div>
+                        <!-- Header superior separado por linea horizontal -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 14px; margin-bottom: 24px; font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); letter-spacing: 0.12em;">
+                            <span>Línea de señales / Empresa 00481</span>
+                            <span>Puntuación acumulada</span>
+                        </div>
+
+                        <!-- Lista minimalista de eventos separada con linea vertical y lineas finas horizontales -->
+                        <div style="position: relative;">
+                            <!-- Linea vertical conectora -->
+                            <div style="position: absolute; left: 11px; top: 16px; bottom: 16px; width: 1px; background: var(--border-color); z-index: 1;"></div>
+
+                            <!-- Row 1 -->
+                            <div class="viga-timeline-row">
+                                <span class="timeline-dot"></span>
+                                <div>
+                                    <div class="timeline-title">+30% actividad ejecutiva</div>
+                                    <div class="timeline-meta">Hace 24 días &middot; Actividad</div>
+                                </div>
+                                <div class="timeline-tag hidden-mobile">evento 01</div>
+                                <span class="timeline-score">+18</span>
+                            </div>
+
+                            <!-- Row 2 -->
+                            <div class="viga-timeline-row">
+                                <span class="timeline-dot"></span>
+                                <div>
+                                    <div class="timeline-title">Nueva línea de servicio</div>
+                                    <div class="timeline-meta">Hace 18 días &middot; Web</div>
+                                </div>
+                                <div class="timeline-tag hidden-mobile">evento 02</div>
+                                <span class="timeline-score">+21</span>
+                            </div>
+
+                            <!-- Row 3 -->
+                            <div class="viga-timeline-row">
+                                <span class="timeline-dot"></span>
+                                <div>
+                                    <div class="timeline-title">Dominio regional registrado</div>
+                                    <div class="timeline-meta">Hace 11 días &middot; Dominio</div>
+                                </div>
+                                <div class="timeline-tag hidden-mobile">evento 03</div>
+                                <span class="timeline-score">+17</span>
+                            </div>
+
+                            <!-- Row 4 -->
+                            <div class="viga-timeline-row">
+                                <span class="timeline-dot"></span>
+                                <div>
+                                    <div class="timeline-title">Nueva dirección comercial</div>
+                                    <div class="timeline-meta">Hace 7 días &middot; Registro</div>
+                                </div>
+                                <div class="timeline-tag hidden-mobile">evento 04</div>
+                                <span class="timeline-score">+14</span>
+                            </div>
+
+                            <!-- Row 5 -->
+                            <div class="viga-timeline-row">
+                                <span class="timeline-dot"></span>
+                                <div>
+                                    <div class="timeline-title">5 vacantes en tech y operaciones</div>
+                                    <div class="timeline-meta">Hace 3 días &middot; Talento</div>
+                                </div>
+                                <div class="timeline-tag hidden-mobile">evento 05</div>
+                                <span class="timeline-score">+21</span>
+                            </div>
+                        </div>
+
+                        <!-- Resumen final separado -->
+                        <div class="viga-summary-box" style="margin-top: 28px;">
+                            <div>
+                                <div style="font-size: 0.68rem; text-transform: uppercase; font-weight: 700; color: var(--accent-red); letter-spacing: 0.1em;">Lectura compuesta</div>
+                                <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main); margin-top: 3px;">Expansión regional &middot; Tecnología/Operaciones</div>
+                            </div>
+                            <div style="font-family: var(--font-heading); font-size: 2.2rem; font-weight: 800; color: var(--text-main);">91</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: PARA EQUIPOS (#equipos) -->
+        <section id="equipos" class="viga-section">
+            <div class="viga-container">
+                <span class="text-eyebrow" style="font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase;">Inteligencia para actuar antes</span>
+                <h2 style="font-family: var(--font-heading); font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-top: 8px; line-height: 1.2;">
+                    Una misma realidad. Tres decisiones más precisas.
+                </h2>
+
+                <!-- Lista horizontal dividida por lineas -->
+                <div class="viga-equipos-list">
+                    <!-- Row 01 -->
+                    <div class="viga-equipos-row">
+                        <span class="viga-equipos-num">01</span>
+                        <div class="viga-equipos-title-group">
+                            <i class="fa-solid fa-building-columns"></i>
+                            <h3>Banca corporativa</h3>
+                        </div>
+                        <p class="viga-equipos-desc">
+                            Detecta crecimiento, inversión y necesidad de financiación antes de que aparezcan en la cartera comercial.
+                        </p>
+                        <div class="viga-equipos-arrow hidden-mobile">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </div>
+
+                    <!-- Row 02 -->
+                    <div class="viga-equipos-row">
+                        <span class="viga-equipos-num">02</span>
+                        <div class="viga-equipos-title-group">
+                            <i class="fa-solid fa-eye"></i>
+                            <h3>Fondos y búsqueda</h3>
+                        </div>
+                        <p class="viga-equipos-desc">
+                            Convierte millones de compañías privadas en un universo priorizado con señales que se pueden defender.
+                        </p>
+                        <div class="viga-equipos-arrow hidden-mobile">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </div>
+
+                    <!-- Row 03 -->
+                    <div class="viga-equipos-row">
+                        <span class="viga-equipos-num">03</span>
+                        <div class="viga-equipos-title-group">
+                            <i class="fa-solid fa-globe"></i>
+                            <h3>Inmobiliario y ventas B2B</h3>
+                        </div>
+                        <p class="viga-equipos-desc">
+                            Encuentra expansiones, cambios tecnológicos y nuevos emplazamientos mientras todavía son accionables.
+                        </p>
+                        <div class="viga-equipos-arrow hidden-mobile">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Bar -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 48px;">
+                    <div style="border-left: 2px solid var(--accent-red); padding-left: 16px;">
+                        <div style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 800; color: var(--text-main);">7 — 90</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">días de contexto temporal</div>
+                    </div>
+                    <div style="border-left: 2px solid var(--accent-red); padding-left: 16px;">
+                        <div style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 800; color: var(--text-main);">0.88</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">confianza explicable por señal</div>
+                    </div>
+                    <div style="border-left: 2px solid var(--accent-red); padding-left: 16px;">
+                        <div style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 800; color: var(--text-main);">RGPD</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">privacidad desde el diseño</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: TRAZABILIDAD PRIMERO (#trazabilidad) -->
+        <section id="trazabilidad" class="viga-section">
+            <div class="viga-container">
+                <div class="viga-trazabilidad-grid">
+                    <div>
+                        <span class="text-eyebrow" style="font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase;">Trazabilidad primero</span>
+                        <h2 style="font-family: var(--font-heading); font-size: 2.3rem; font-weight: 800; color: var(--text-main); line-height: 1.18; margin-top: 10px; margin-bottom: 18px;">
+                            Cada puntuación llega con su historia.
+                        </h2>
+                        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.65;">
+                            Resolución de entidades, procedencia de la señal y controles de calidad para reducir falsos positivos. La inteligencia que abre una conversación, no una caja negra.
+                        </p>
+                    </div>
+                    <div>
+                        <div class="viga-trazabilidad-list">
+                            <div class="viga-trazabilidad-item">
+                                <div class="viga-trazabilidad-icon">
+                                    <i class="fa-solid fa-database"></i>
+                                </div>
+                                <div class="viga-trazabilidad-text">
+                                    <h3>Entidades canónicas</h3>
+                                </div>
+                            </div>
+                            <div class="viga-trazabilidad-item">
+                                <div class="viga-trazabilidad-icon">
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                </div>
+                                <div class="viga-trazabilidad-text">
+                                    <h3>Privacidad y cumplimiento</h3>
+                                </div>
+                            </div>
+                            <div class="viga-trazabilidad-item">
+                                <div class="viga-trazabilidad-icon">
+                                    <i class="fa-solid fa-check"></i>
+                                </div>
+                                <div class="viga-trazabilidad-text">
+                                    <h3>Calidad verificable</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER MINIMALISTA -->
+        <footer style="padding: 40px 24px; border-top: 1px solid var(--border-color); margin-top: 60px;">
+            <div class="viga-container" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: var(--text-dim);">
+                <div>
+                    <strong style="color: var(--text-main);">OFANRADAR</strong> &middot; Inteligencia operativa de mercado explicable
+                </div>
+                <div style="display: flex; gap: 16px;">
+                    <a href="/precios" style="color: var(--text-muted); text-decoration: none;">Precios</a>
+                    <a href="/app" style="color: var(--text-muted); text-decoration: none;">Terminal</a>
+                    <a href="/privacy" style="color: var(--text-muted); text-decoration: none;">Privacidad</a>
+                    <a href="/terms" style="color: var(--text-muted); text-decoration: none;">Términos</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        (function() {
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            const themeIcon = document.getElementById('theme-icon');
+            
+            function applyThemeMode(mode) {
+                if (mode === 'light-mode') {
+                    document.body.classList.remove('dark-mode');
+                    document.body.classList.add('light-mode');
+                    if (themeIcon) themeIcon.className = 'fa-solid fa-moon';
+                } else {
+                    document.body.classList.remove('light-mode');
+                    document.body.classList.add('dark-mode');
+                    if (themeIcon) themeIcon.className = 'fa-solid fa-sun';
+                }
+                localStorage.setItem('business-radar-theme', mode);
+            }
+
+            const savedTheme = localStorage.getItem('business-radar-theme') || 'dark-mode';
+            applyThemeMode(savedTheme);
+
+            if (themeBtn) {
+                themeBtn.addEventListener('click', () => {
+                    const isLight = document.body.classList.contains('light-mode');
+                    applyThemeMode(isLight ? 'dark-mode' : 'light-mode');
+                });
+            }
+        })();
+    </script>
+</body>
+</html>

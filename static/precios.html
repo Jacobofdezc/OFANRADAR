@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Precios y Planes | OFANRADAR — Inteligencia Operativa de Mercado</title>
+    <meta name="description" content="Planes transparentes diseñados para equipos que necesitan ventaja competitiva con OFANRADAR.">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/favicon.png?v=9.1">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=9.1">
+</head>
+<body class="dark-mode">
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <a href="/" class="brand" style="text-decoration: none;">
+            <img src="/static/img/logo-dark.jpg?v=9.1" alt="OFANRADAR" class="brand-logo-img logo-dark-mode">
+            <img src="/static/img/logo-light.jpg?v=9.1" alt="OFANRADAR" class="brand-logo-img logo-light-mode">
+            <span class="brand-subtitle hidden-mobile" style="color: var(--text-muted); font-weight: 500; border-left: 1px solid var(--border-color); padding-left: 10px; margin-left: 2px;">Inteligencia Operativa</span>
+        </a>
+
+        <div class="header-actions">
+            <!-- Theme Toggle Button -->
+            <button class="btn btn-outline" id="theme-toggle-btn" title="Cambiar tema de color" style="padding: 7px 10px;">
+                <i class="fa-solid fa-sun" id="theme-icon"></i>
+            </button>
+            <a href="/app" class="btn btn-primary" style="background: var(--text-main); color: var(--bg-dark); padding: 10px 20px; font-weight: 800; border-radius: 8px; text-decoration: none;">
+                <i class="fa-solid fa-terminal"></i> Abrir Terminal
+            </a>
+        </div>
+    </header>
+
+    <!-- PRECIOS CONTAINER -->
+    <main style="max-width: 1100px; margin: 0 auto; padding: 120px 24px 60px 24px; text-align: center;">
+        <div class="text-eyebrow" style="color: var(--brand-gold); margin-bottom: 8px;">
+            <i class="fa-solid fa-crown"></i> Planes Transparentes
+        </div>
+        <h1 style="font-family: var(--font-heading); font-size: 2.8rem; font-weight: 800; color: var(--text-main); margin-bottom: 12px; letter-spacing: -0.02em;">
+            Elige el plan ideal para tu equipo
+        </h1>
+        <p style="font-size: 1.05rem; color: var(--text-muted); max-width: 600px; margin: 0 auto 48px auto; line-height: 1.6;">
+            Accede a señales públicas procesadas con inteligencia artificial. Comienza hoy mismo con nuestra prueba gratuita de 7 días.
+        </p>
+
+        <!-- GRID DE 2 PLANES -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; align-items: stretch; text-align: left;">
+            
+            <!-- PLAN 1: STARTER / PRUEBA -->
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 36px 30px; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s ease;">
+                <div>
+                    <span class="badge" style="background: rgba(125,125,125,0.08); color: var(--text-muted); border: 1px solid var(--border-color); font-size: 0.75rem; margin-bottom: 16px; display: inline-block;">
+                        <i class="fa-solid fa-seedling"></i> PLAN STARTER / EVALUACIÓN
+                    </span>
+
+                    <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">Starter</h2>
+                    <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 24px;">Para analistas individuales que están explorando el mercado.</p>
+
+                    <div style="font-size: 3rem; font-weight: 800; font-family: var(--font-heading); color: var(--text-main); margin-bottom: 6px;">
+                        $0 <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">/ 7 días</span>
+                    </div>
+
+                    <div style="padding: 6px 12px; background: rgba(125, 125, 125, 0.08); border-radius: 6px; color: var(--text-muted); font-weight: 600; font-size: 0.8rem; display: inline-block; margin-bottom: 28px;">
+                        Prueba gratuita de 7 días sin tarjeta
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 32px;">
+                        <div class="price-feature-item"><i class="fa-solid fa-check-circle" style="color: var(--accent-green);"></i> <span>Monitoreo de hasta <strong>10 empresas</strong></span></div>
+                        <div class="price-feature-item"><i class="fa-solid fa-check-circle" style="color: var(--accent-green);"></i> <span>Score de Intención en 5 vectores</span></div>
+                        <div class="price-feature-item"><i class="fa-solid fa-check-circle" style="color: var(--accent-green);"></i> <span>1 Usuario analista</span></div>
+                        <div class="price-feature-item"><i class="fa-solid fa-check-circle" style="color: var(--accent-green);"></i> <span>Directorio general de empresas</span></div>
+                        <div class="price-feature-item" style="opacity: 0.4;"><i class="fa-solid fa-times-circle"></i> <span>Executive Brief IA en 3 párrafos</span></div>
+                        <div class="price-feature-item" style="opacity: 0.4;"><i class="fa-solid fa-times-circle"></i> <span>Webhooks HMAC y Alertas Slack/Teams</span></div>
+                    </div>
+                </div>
+
+                <a href="/app" class="btn btn-outline btn-full" style="padding: 14px; font-weight: 700; font-size: 0.95rem; text-align: center; text-decoration: none; border-radius: 8px;">
+                    Probar Terminal Gratis
+                </a>
+            </div>
+
+            <!-- PLAN 2: PRO TERMINAL & AI INTELLIGENCE (DESTACADO) -->
+            <div style="background: var(--bg-card); border: 2px solid var(--text-main); border-radius: 16px; padding: 36px 30px; display: flex; flex-direction: column; justify-content: space-between; position: relative; box-shadow: var(--glass-shadow);">
+                <div style="position: absolute; top: -14px; right: 24px; background: var(--text-main); color: var(--bg-dark); font-weight: 800; font-size: 0.72rem; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em;">
+                    RECOMENDADO PARA EQUIPOS
+                </div>
+
+                <div>
+                    <span class="badge" style="background: rgba(225, 29, 72, 0.12); color: var(--accent-red); border: 1px solid rgba(225, 29, 72, 0.3); font-size: 0.75rem; margin-bottom: 16px; display: inline-block;">
+                        <i class="fa-solid fa-bolt"></i> PLAN PRO TERMINAL & AI
+                    </span>
+
+                    <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">Pro Terminal</h2>
+                    <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 24px;">Para equipos de inversión, ventas B2B y banca corporativa.</p>
+
+                    <div style="font-size: 3rem; font-weight: 800; font-family: var(--font-heading); color: var(--text-main); margin-bottom: 6px;">
+                        $99 <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">/ mes</span>
+                    </div>
+
+                    <div style="padding: 6px 12px; background: rgba(16, 185, 129, 0.12); border-radius: 6px; color: var(--accent-green); font-weight: 700; font-size: 0.8rem; display: inline-block; margin-bottom: 28px;">
+                        🎉 7 Días de Prueba Gratuita Incluidos
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 32px;">
+                        <div class="price-feature-item"><i class="fa-solid fa-check-circle" style="color: var(--accent-green);"></i> <span>Acceso ilimitado a <strong>Intent Scores en 5 vectores</strong></span></div>
+                        <div class="price-feature-item"><i class="fa-solid fa-check-circle" style="color: var(--accent-green);"></i> <span>Executive Brief sintetizado por <strong>IA en 3 párrafos</strong></span></div>
+                        <div class="price-feature-item"><i class="fa-solid fa-check-circle" style="color: var(--accent-green);"></i> <span>Motor Detector de Cambios Web (<strong>DOM Diffing anti-ruido</strong>)</span></div>
+                        <div class="price-feature-item"><i class="fa-solid fa-check-circle" style="color: var(--accent-green);"></i> <span>Identificador de empresas por <strong>CIF / NIF / Dominio</strong></span></div>
+                        <div class="price-feature-item"><i class="fa-solid fa-check-circle" style="color: var(--accent-green);"></i> <span>Listas de vigilancia (Watchlists) y <strong>exportación CSV</strong></span></div>
+                        <div class="price-feature-item"><i class="fa-solid fa-check-circle" style="color: var(--accent-green);"></i> <span>Alertas proactivas y <strong>Webhooks HMAC SHA-256</strong></span></div>
+                        <div class="price-feature-item"><i class="fa-solid fa-check-circle" style="color: var(--accent-green);"></i> <span>Auto-enriquecimiento de dominios con Clearbit API</span></div>
+                    </div>
+                </div>
+
+                <a href="/app" class="btn btn-primary btn-full" style="background: var(--text-main); color: var(--bg-dark); padding: 16px; font-weight: 800; font-size: 1rem; text-align: center; text-decoration: none; border-radius: 8px;">
+                    <i class="fa-solid fa-bolt"></i> Comenzar Trial de 7 Días ($99/mes)
+                </a>
+            </div>
+        </div>
+
+        <div style="margin-top: 60px; font-size: 0.82rem; color: var(--text-dim); text-align: center;">
+            Radar &middot; Inteligencia operativa explicable &middot; Todos los derechos reservados
+        </div>
+    </main>
+
+    <script>
+        (function() {
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            const themeIcon = document.getElementById('theme-icon');
+            
+            function applyThemeMode(mode) {
+                if (mode === 'light-mode') {
+                    document.body.classList.remove('dark-mode');
+                    document.body.classList.add('light-mode');
+                    if (themeIcon) themeIcon.className = 'fa-solid fa-moon';
+                } else {
+                    document.body.classList.remove('light-mode');
+                    document.body.classList.add('dark-mode');
+                    if (themeIcon) themeIcon.className = 'fa-solid fa-sun';
+                }
+                localStorage.setItem('business-radar-theme', mode);
+            }
+
+            const savedTheme = localStorage.getItem('business-radar-theme') || 'dark-mode';
+            applyThemeMode(savedTheme);
+
+            if (themeBtn) {
+                themeBtn.addEventListener('click', () => {
+                    const isLight = document.body.classList.contains('light-mode');
+                    applyThemeMode(isLight ? 'dark-mode' : 'light-mode');
+                });
+            }
+        })();
+    </script>
+</body>
+</html>
