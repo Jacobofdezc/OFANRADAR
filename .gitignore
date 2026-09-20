@@ -19,3 +19,8 @@ scratch/
 Thumbs.db
 .idea/
 .vscode/
+
+# Environment secrets
+.env
+.env.local
+.env.*.local

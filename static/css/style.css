@@ -263,6 +263,11 @@ body.light-mode .logo-light-mode {
     grid-template-columns: 360px 1fr;
     height: calc(100vh - 57px);
     overflow: hidden;
+    transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.terminal-layout.sidebar-collapsed {
+    grid-template-columns: 0px 1fr !important;
 }
 
 .sidebar {
@@ -271,6 +276,79 @@ body.light-mode .logo-light-mode {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.terminal-layout.sidebar-collapsed .sidebar {
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    opacity: 0 !important;
+    border-right: none !important;
+    pointer-events: none !important;
+}
+
+#sidebar-expand-tab {
+    position: fixed;
+    left: 0;
+    top: 90px;
+    z-index: 9999;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-left: none;
+    border-radius: 0 6px 6px 0;
+    padding: 8px 6px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 11px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#sidebar-expand-tab:hover {
+    color: var(--brand-gold);
+    border-color: var(--brand-gold);
+    background: var(--bg-card-hover);
+    transform: translateX(2px);
+}
+
+#sidebar-expand-tab.hidden {
+    display: none !important;
+}
+
+.btn-delete-company-x {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 6px !important;
+    background: rgba(239, 68, 68, 0.2) !important;
+    border: 1px solid rgba(239, 68, 68, 0.45) !important;
+    color: #f87171 !important;
+    font-size: 13px !important;
+    cursor: pointer !important;
+    line-height: 1 !important;
+    transition: all 0.2s ease !important;
+    margin-left: 6px !important;
+    flex-shrink: 0 !important;
+    z-index: 10 !important;
+}
+
+.btn-delete-company-x:hover {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    transform: scale(1.15) !important;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.6) !important;
+}
+.sidebar-collapse-toggle-btn:hover {
+    color: var(--brand-gold);
+    border-color: var(--brand-gold);
 }
 
 .sidebar-header {
@@ -413,6 +491,7 @@ body.dark-mode .custom-select option {
 }
 
 .company-card {
+    position: relative;
     padding: 12px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -422,6 +501,28 @@ body.dark-mode .custom-select option {
     display: flex;
     flex-direction: column;
     gap: 6px;
+}
+
+.company-card .card-delete-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    background: rgba(225, 29, 72, 0.12);
+    border: 1px solid rgba(225, 29, 72, 0.3);
+    color: #ef4444;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.company-card .card-delete-icon:hover {
+    background: #ef4444;
+    color: #ffffff;
+    transform: scale(1.15);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
 }
 
 .company-card:hover {

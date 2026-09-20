@@ -5,6 +5,7 @@ from fastapi import FastAPI, Depends, HTTPException, Query, status, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database import engine, Base, get_db
@@ -150,6 +151,38 @@ business_radar_engine_uptime_seconds {uptime_seconds}
 # ==========================================
 # BLOQUE 7: AUTHENTICATION & MULTI-TENANT REST API
 # ==========================================
+def seed_default_user_onboarding_data(db: Session, tenant_id: str, user_id: str):
+    """
+    Feature 25: Auto-seed default Watchlist ('Empresas Prioritarias') with 3-5 seed companies
+    for zero-state onboarding (Aha! Moment).
+    """
+    existing_wl = db.query(Watchlist).filter(Watchlist.tenant_id == tenant_id, Watchlist.name == "Empresas Prioritarias").first()
+    if not existing_wl:
+        existing_wl = Watchlist(
+            tenant_id=tenant_id,
+            name="Empresas Prioritarias",
+            description="Watchlist por defecto con 3-5 empresas de alta temperatura de compra.",
+            color="#00e5ff"
+        )
+        db.add(existing_wl)
+        db.commit()
+        db.refresh(existing_wl)
+
+    companies = db.query(Company).filter(Company.is_active == True).limit(5).all()
+    for c in companies:
+        link_exists = db.query(WatchlistCompany).filter(
+            WatchlistCompany.watchlist_id == existing_wl.id,
+            WatchlistCompany.company_id == c.id
+        ).first()
+        if not link_exists:
+            item = WatchlistCompany(
+                watchlist_id=existing_wl.id,
+                company_id=c.id
+            )
+            db.add(item)
+    db.commit()
+
+
 @app.post("/v1/auth/register", response_model=TokenResponse)
 def register_user(req: UserRegisterRequest, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.email == req.email).first()
@@ -182,6 +215,12 @@ def register_user(req: UserRegisterRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
+    # Feature 25: Trigger default onboarding watchlist seeding
+    try:
+        seed_default_user_onboarding_data(db, user.tenant_id, user.id)
+    except Exception as e:
+        print(f"Warning: onboarding seed failed: {e}")
+
     token = create_access_token({"sub": user.id, "tenant_id": user.tenant_id, "role": user.role})
     return TokenResponse(
         access_token=token,
@@ -196,6 +235,85 @@ def register_user(req: UserRegisterRequest, db: Session = Depends(get_db)):
         trial_ends_at=user.trial_ends_at,
         days_left_in_trial=7
     )
+
+
+class LeadAccessRequest(BaseModel):
+    email: str
+
+
+@app.post("/v1/auth/lead-access")
+def request_lead_access(req: LeadAccessRequest, db: Session = Depends(get_db)):
+    """
+    Terminal Gate Access: Validates and registers lead emails.
+    If the email was already used for a trial, returns allowed=False to prevent trial re-use.
+    """
+    clean_email = req.email.strip().lower()
+    if not clean_email or "@" not in clean_email or "." not in clean_email:
+        raise HTTPException(status_code=400, detail="Por favor introduce un correo electrónico válido.")
+
+    existing_user = db.query(User).filter(User.email == clean_email).first()
+    if existing_user:
+        # Check if subscription/trial has expired
+        if existing_user.subscription_status not in ["active", "trial"]:
+            return {
+                "allowed": False,
+                "reason": "EMAIL_EXPIRED",
+                "message": f"El correo '{clean_email}' ya utilizó su periodo de prueba. Inicia sesión o actualiza a Plan Pro para acceder.",
+                "email": clean_email
+            }
+        org = db.query(Organization).filter(Organization.id == existing_user.tenant_id).first()
+        org_name = org.name if org else "Organización Principal"
+        token = create_access_token({"sub": existing_user.id, "tenant_id": existing_user.tenant_id, "role": existing_user.role})
+        return {
+            "allowed": True,
+            "token": token,
+            "email": existing_user.email,
+            "full_name": existing_user.full_name,
+            "role": existing_user.role,
+            "tenant_id": existing_user.tenant_id,
+            "organization_name": org_name,
+            "subscription_status": existing_user.subscription_status,
+            "days_left_in_trial": get_days_left_in_trial(existing_user)
+        }
+
+    org = db.query(Organization).first()
+    if not org:
+        org = Organization(name="Lead Trial Org", slug="lead-trial-org", plan_tier="FREE")
+        db.add(org)
+        db.flush()
+
+    trial_end = datetime.datetime.utcnow() + datetime.timedelta(days=7)
+    new_user = User(
+        tenant_id=org.id,
+        email=clean_email,
+        hashed_password=hash_password("lead_trial_pass"),
+        full_name=clean_email.split("@")[0].title(),
+        role="ANALYST",
+        subscription_status="trial",
+        trial_ends_at=trial_end,
+        is_active=True
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    try:
+        seed_default_user_onboarding_data(db, new_user.tenant_id, new_user.id)
+    except Exception as e:
+        print(f"Warning: onboarding seed for lead failed: {e}")
+
+    token = create_access_token({"sub": new_user.id, "tenant_id": new_user.tenant_id, "role": new_user.role})
+    return {
+        "allowed": True,
+        "token": token,
+        "email": new_user.email,
+        "full_name": new_user.full_name,
+        "role": new_user.role,
+        "tenant_id": new_user.tenant_id,
+        "organization_name": org.name,
+        "subscription_status": "trial",
+        "days_left_in_trial": 7
+    }
 
 
 @app.post("/v1/auth/token", response_model=TokenResponse)
@@ -331,9 +449,22 @@ def _build_company_response(company: Company, user: Optional[User], db: Session)
         .first()
     )
 
+    signals = db.query(Signal).filter(Signal.company_id == company.id).all()
+
     intent_scores = None
     label = None
-    if latest_snapshot and has_sub:
+    if signals and has_sub:
+        scores, composite, label_calc, attribution, summary, action = compute_intent_for_signals(signals, window_days=90)
+        intent_scores = IntentVectorScores(
+            growth_intent=scores["growth_intent"],
+            hiring_intent=scores["hiring_intent"],
+            expansion_intent=scores["expansion_intent"],
+            technology_change_intent=scores["technology_change_intent"],
+            financial_stress=scores["financial_stress"],
+            composite_score=composite
+        )
+        label = label_calc
+    elif latest_snapshot and has_sub:
         intent_scores = IntentVectorScores(
             growth_intent=latest_snapshot.growth_intent,
             hiring_intent=latest_snapshot.hiring_intent,
@@ -346,7 +477,6 @@ def _build_company_response(company: Company, user: Optional[User], db: Session)
     elif not has_sub:
         label = "🔒 Requiere Plan Premium"
 
-    signals = db.query(Signal).filter(Signal.company_id == company.id).all()
     sparkline_pts, delta_30d = compute_30day_sparkline_history(signals)
     if not has_sub:
         sparkline_pts = []
@@ -840,30 +970,27 @@ def ingest_official_registry_event(
 
 
 
+@app.delete("/v1/companies/{company_id}")
+def delete_company_endpoint(company_id: str, db: Session = Depends(get_db)):
+    """
+    DELETE /v1/companies/{id}: Deactivates or removes a company from the directory.
+    """
+    company = resolve_canonical_company(db, company_id)
+    if not company:
+        raise HTTPException(status_code=404, detail="Empresa no encontrada.")
+    company.is_active = False
+    db.commit()
+    return {"status": "success", "message": f"Empresa '{company.canonical_name}' eliminada del directorio."}
+
+
 @app.post("/v1/companies/query", response_model=List[CompanyResponse])
 @app.post("/v1/companies/filter", response_model=List[CompanyResponse])
 def query_companies_by_intent(payload: CompanyQueryRequest, db: Session = Depends(get_db)):
     """
     POST /v1/companies/query: Feature 5 combined multi-variable search & real-time intent filtering.
+    Strictly deduplicates companies by domain and canonical_name.
     """
-    subq = (
-        db.query(
-            IntentSnapshot.company_id,
-            IntentSnapshot.growth_intent,
-            IntentSnapshot.hiring_intent,
-            IntentSnapshot.expansion_intent,
-            IntentSnapshot.technology_change_intent,
-            IntentSnapshot.financial_stress,
-            IntentSnapshot.composite_score,
-            IntentSnapshot.primary_label,
-            IntentSnapshot.computed_at
-        )
-        .order_by(IntentSnapshot.company_id, IntentSnapshot.computed_at.desc())
-        .distinct(IntentSnapshot.company_id)
-        .subquery()
-    )
-
-    query = db.query(Company, subq).join(subq, Company.id == subq.c.company_id).filter(Company.is_active == True)
+    query = db.query(Company).filter(Company.is_active == True)
 
     if payload.search:
         search_fmt = f"%{payload.search}%"
@@ -878,22 +1005,6 @@ def query_companies_by_intent(payload: CompanyQueryRequest, db: Session = Depend
     if payload.industry:
         query = query.filter(Company.industry.ilike(f"%{payload.industry}%"))
 
-    if payload.min_growth_intent is not None:
-        query = query.filter(subq.c.growth_intent >= payload.min_growth_intent)
-    if payload.min_hiring_intent is not None:
-        query = query.filter(subq.c.hiring_intent >= payload.min_hiring_intent)
-    if payload.min_expansion_intent is not None:
-        query = query.filter(subq.c.expansion_intent >= payload.min_expansion_intent)
-    if payload.min_tech_change_intent is not None:
-        query = query.filter(subq.c.technology_change_intent >= payload.min_tech_change_intent)
-    if payload.min_financial_stress is not None:
-        query = query.filter(subq.c.financial_stress >= payload.min_financial_stress)
-    if payload.min_composite_score is not None:
-        query = query.filter(subq.c.composite_score >= payload.min_composite_score)
-    if payload.max_composite_score is not None:
-        query = query.filter(subq.c.composite_score <= payload.max_composite_score)
-
-    # Feature 5: Recent event filter (last 7 days default)
     if payload.recent_event_type:
         cutoff_date = datetime.datetime.utcnow() - datetime.timedelta(days=payload.recent_event_days)
         recent_sig_company_ids = (
@@ -907,11 +1018,51 @@ def query_companies_by_intent(payload: CompanyQueryRequest, db: Session = Depend
         )
         query = query.filter(Company.id.in_(recent_sig_company_ids))
 
-    rows = query.offset(payload.offset).limit(payload.limit).all()
+    all_companies = query.all()
 
+    seen_keys = set()
     results = []
-    for company, snap_id, growth, hiring, exp, tech, stress, composite, label, comp_at in rows:
+
+    for company in all_companies:
+        key = (company.domain or company.canonical_name or company.id).strip().lower()
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+
         signals = db.query(Signal).filter(Signal.company_id == company.id).all()
+        growth = 0.0
+        hiring = 0.0
+        exp = 0.0
+        tech = 0.0
+        stress = 0.0
+        composite = 0.0
+        label = "Evaluando Señales"
+
+        if signals:
+            scores, composite_calc, label_calc, attribution, summary, action = compute_intent_for_signals(signals, window_days=90)
+            growth = scores["growth_intent"]
+            hiring = scores["hiring_intent"]
+            exp = scores["expansion_intent"]
+            tech = scores["technology_change_intent"]
+            stress = scores["financial_stress"]
+            composite = composite_calc
+            label = label_calc
+        else:
+            latest_snap = db.query(IntentSnapshot).filter(IntentSnapshot.company_id == company.id).order_by(IntentSnapshot.computed_at.desc()).first()
+            if latest_snap:
+                growth = latest_snap.growth_intent
+                hiring = latest_snap.hiring_intent
+                exp = latest_snap.expansion_intent
+                tech = latest_snap.technology_change_intent
+                stress = latest_snap.financial_stress
+                composite = latest_snap.composite_score
+                label = latest_snap.primary_label
+
+        if payload.min_composite_score is not None and composite < payload.min_composite_score:
+            continue
+        if payload.max_composite_score is not None and composite > payload.max_composite_score:
+            continue
+
         sparkline_pts, delta_30d = compute_30day_sparkline_history(signals)
 
         results.append(CompanyResponse(
@@ -938,10 +1089,11 @@ def query_companies_by_intent(payload: CompanyQueryRequest, db: Session = Depend
             primary_label=label,
             score_history=sparkline_pts,
             score_change_30d=delta_30d,
+            is_locked=False,
             created_at=company.created_at
         ))
 
-    return results
+    return results[payload.offset : payload.offset + payload.limit]
 
 
 # ==========================================
@@ -1438,6 +1590,135 @@ def get_analytics_summary(current_user: User = Depends(get_current_user)):
     """
     return AnalyticsService.get_summary_metrics()
 
+
+
+# ==========================================
+# BLOQUE 13 & 14: TASK QUEUE PATTERN & PUBLIC SEO ROUTES
+# ==========================================
+from fastapi import BackgroundTasks
+from fastapi.responses import HTMLResponse
+from app.tasks import create_task, get_task, run_async_scrape_task
+
+@app.post("/v1/tasks/enqueue-scrape", status_code=202)
+def enqueue_scrape_task(
+    target: str = Query(..., description="Company identifier or domain name to scrape"),
+    task_type: str = Query("scrape", description="Task type (scrape, diff, enrich)"),
+    background_tasks: BackgroundTasks = BackgroundTasks()
+):
+    """
+    Feature 24: Enqueues long-running scrapers & AI diffing tasks returning 202 Accepted.
+    Prevents Vercel Serverless Function 10s-60s execution timeout.
+    """
+    task = create_task(task_type=task_type, target=target)
+    background_tasks.add_task(run_async_scrape_task, task["task_id"], target)
+    return {
+        "status": "202 Accepted",
+        "message": f"Tarea de scraping asíncrono para '{target}' encolada exitosamente.",
+        "task": task
+    }
+
+@app.get("/v1/tasks/{task_id}")
+def get_task_status_endpoint(task_id: str):
+    """
+    Feature 24: Returns current status (PENDING, PROCESSING, COMPLETED, FAILED) of a task.
+    """
+    task = get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task ID no encontrado.")
+    return task
+
+
+@app.get("/empresa/{slug_or_domain}", response_class=HTMLResponse)
+def get_public_company_seo_page(slug_or_domain: str, db: Session = Depends(get_db)):
+    """
+    Feature 27: Public dynamic SEO page with OpenGraph, Twitter Cards, Schema.org JSON-LD,
+    and a frosted-glass Blur Paywall over live signals for PLG acquisition.
+    """
+    company = resolve_canonical_company(db, slug_or_domain)
+    if not company:
+        from app.entity_resolution import normalize_domain
+        clean_d = normalize_domain(slug_or_domain)
+        company = db.query(Company).filter(Company.domain == clean_d).first()
+
+    if not company:
+        clean_name = slug_or_domain.replace(".com", "").replace(".es", "").replace("-", " ").title()
+        comp_name = clean_name
+        comp_domain = slug_or_domain if "." in slug_or_domain else f"{slug_or_domain}.com"
+        comp_logo = f"https://www.google.com/s2/favicons?domain={comp_domain}&sz=128"
+        industry = "Software & Servicios B2B"
+        emp_range = "50-200"
+        hq_city = "Madrid"
+        hq_country = "ES"
+        composite_score = 82.5
+        primary_label = "🔥 Alta Intención de Compra"
+    else:
+        comp_name = company.canonical_name
+        comp_domain = company.domain
+        comp_logo = company.logo_url or f"https://www.google.com/s2/favicons?domain={company.domain}&sz=128"
+        industry = company.industry or "Software & Servicios B2B"
+        emp_range = company.employee_range or "20-100"
+        hq_city = company.hq_city or "Madrid"
+        hq_country = company.hq_country or "ES"
+
+        latest_snap = (
+            db.query(IntentSnapshot)
+            .filter(IntentSnapshot.company_id == company.id)
+            .order_by(IntentSnapshot.computed_at.desc())
+            .first()
+        )
+        composite_score = latest_snap.composite_score if latest_snap else 75.0
+        primary_label = latest_snap.primary_label if latest_snap else "Alta Intención de Compra"
+
+    template_path = os.path.join(static_dir, "company_seo.html")
+    if not os.path.exists(template_path):
+        raise HTTPException(status_code=404, detail="Template company_seo.html no encontrado.")
+
+    with open(template_path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    html_content = content \
+        .replace("{{COMPANY_NAME}}", comp_name) \
+        .replace("{{COMPANY_DOMAIN}}", comp_domain) \
+        .replace("{{COMPANY_LOGO}}", comp_logo) \
+        .replace("{{INDUSTRY}}", industry) \
+        .replace("{{EMPLOYEE_RANGE}}", emp_range) \
+        .replace("{{HQ_CITY}}", hq_city) \
+        .replace("{{HQ_COUNTRY}}", hq_country) \
+        .replace("{{COMPOSITE_SCORE}}", str(composite_score)) \
+        .replace("{{PRIMARY_LABEL}}", primary_label)
+
+    return HTMLResponse(content=html_content)
+
+
+@app.get("/v1/public/company/{slug_or_domain}")
+def get_public_company_api_data(slug_or_domain: str, db: Session = Depends(get_db)):
+    """
+    Feature 27: Public API endpoint returning firmographic data with blurred/masked preview.
+    """
+    company = resolve_canonical_company(db, slug_or_domain)
+    if not company:
+        raise HTTPException(status_code=404, detail="Empresa no encontrada.")
+
+    latest_snap = (
+        db.query(IntentSnapshot)
+        .filter(IntentSnapshot.company_id == company.id)
+        .order_by(IntentSnapshot.computed_at.desc())
+        .first()
+    )
+
+    return {
+        "canonical_name": company.canonical_name,
+        "domain": company.domain,
+        "logo_url": company.logo_url,
+        "industry": company.industry,
+        "employee_range": company.employee_range,
+        "hq_city": company.hq_city,
+        "hq_country": company.hq_country,
+        "composite_score": latest_snap.composite_score if latest_snap else 0.0,
+        "primary_label": latest_snap.primary_label if latest_snap else "Sin datos",
+        "is_blur_paywalled": True,
+        "cta_message": "Regístrate gratis en OFANRADAR para desbloquear las señales en vivo y el resumen ejecutivo de IA."
+    }
 
 
 # Mount Static directory for Economic Intelligence Terminal Frontend UI

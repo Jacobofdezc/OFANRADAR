@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="/static/css/style.css?v=9.1">
+    <link rel="stylesheet" href="/static/css/style.css?v=10.0">
 </head>
 <body class="dark-mode">
     <!-- Top Navigation Bar -->
@@ -42,10 +42,6 @@
                 <i class="fa-solid fa-bell" style="color:var(--accent-amber);"></i> Alertas & Webhooks
             </button>
 
-            <!-- Feature 10 Auto-Enrichment Button -->
-            <button class="btn btn-outline" id="btn-open-enrich-modal" onclick="openEnrichModal()">
-                <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--accent-cyan);"></i> Auto-Enriquecer Dominio
-            </button>
             <!-- Theme Toggle Button (Icon Only) -->
             <button class="btn btn-outline" id="theme-toggle-btn" title="Cambiar tema de color" style="padding: 7px 10px;">
                 <i class="fa-solid fa-sun" id="theme-icon"></i>
@@ -62,15 +58,25 @@
     <div id="terminal-view">
         <!-- FULL-WIDTH MASSIVE STANDALONE TERMINAL LAYOUT -->
         <div class="terminal-layout" style="width: 100%; height: calc(100vh - 64px);">
+            <!-- Subtle Edge Expand Tab (Visible when sidebar is collapsed) -->
+            <div id="sidebar-expand-tab" onclick="toggleSidebarCollapse()" class="hidden" title="Desplegar columna lateral">
+                <i class="fa-solid fa-chevron-right"></i>
+            </div>
+
             <!-- Sidebar: Filter & Company Directory -->
             <aside class="sidebar">
                 <div class="sidebar-header" style="padding: 12px 14px;">
-                    <div class="sidebar-tabs-row" style="margin-bottom: 8px;">
-                        <button class="sidebar-tab-btn active" id="tab-btn-directory" onclick="switchSidebarTab('directory')">
-                            <i class="fa-solid fa-building-columns"></i> Empresas
-                        </button>
-                        <button class="sidebar-tab-btn" id="tab-btn-watchlists" onclick="switchSidebarTab('watchlists')">
-                            <i class="fa-solid fa-star"></i> Watchlists
+                    <div class="sidebar-tabs-row" style="margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <button class="sidebar-tab-btn active" id="tab-btn-directory" onclick="switchSidebarTab('directory')">
+                                <i class="fa-solid fa-building-columns"></i> Empresas
+                            </button>
+                            <button class="sidebar-tab-btn" id="tab-btn-watchlists" onclick="switchSidebarTab('watchlists')">
+                                <i class="fa-solid fa-star"></i> Watchlists
+                            </button>
+                        </div>
+                        <button class="sidebar-collapse-toggle-btn" onclick="toggleSidebarCollapse()" title="Ocultar columna lateral" style="padding: 5px 8px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.04); color: var(--text-muted); border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">
+                            <i class="fa-solid fa-chevron-left"></i>
                         </button>
                     </div>
 
@@ -668,32 +674,48 @@
         </div>
     </div>
 
-    <!-- Feature 10: Auto-Enrichment Modal -->
-    <div class="modal-backdrop" id="enrich-domain-modal">
-        <div class="modal-box" style="max-width: 480px;">
-            <div class="modal-header">
-                <h2><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--accent-cyan);"></i> Auto-Enriquecer Nuevo Dominio</h2>
-                <button class="modal-close" onclick="closeEnrichModal()">&times;</button>
+
+
+    <!-- Modal Personalizado para Confirmar Eliminación -->
+    <div class="modal-backdrop" id="delete-confirm-modal">
+        <div class="modal-box" style="max-width: 420px; text-align: center; padding: 24px; border: 1px solid rgba(239, 68, 68, 0.35); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; font-size: 1.5rem;"></i>
             </div>
-            <div class="modal-body">
-                <form id="enrich-domain-form" onsubmit="handleEnrichSubmit(event)">
-                    <p class="sub-header-text" style="margin-bottom: 12px;">
-                        Ingrese el dominio de cualquier empresa (ej: <code>shopify.com</code>, <code>logistics.es</code>, <code>acme.io</code>).
-                        El sistema extraerá automáticamente su logotipo oficial, sector, plantilla y calculará el score inicial.
-                    </p>
-                    <div class="form-group">
-                        <label>Dominio de la Empresa</label>
-                        <input type="text" id="enrich-domain-input" placeholder="ej: shopify.com" required>
-                    </div>
-                    <div id="enrich-result-status" class="hidden" style="margin-top: 10px; font-size: 0.85rem;"></div>
-                    <div class="modal-actions" style="margin-top: 15px;">
-                        <button type="button" class="btn btn-outline" onclick="closeEnrichModal()">Cancelar</button>
-                        <button type="submit" class="btn btn-primary" id="btn-submit-enrich" style="background: var(--brand-gold); color: #ffffff;"><i class="fa-solid fa-bolt"></i> Enriquecer & Registrar</button>
-                    </div>
-                </form>
+            <h3 style="margin-bottom: 8px; font-size: 1.15rem; color: var(--text-main); font-weight: 700;">¿Eliminar empresa del listado?</h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 22px; line-height: 1.45;">
+                ¿Estás seguro de que deseas desactivar <strong id="delete-confirm-company-name" style="color: var(--text-main);">esta empresa</strong> de tu directorio activo?
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn btn-outline" style="flex: 1; padding: 10px;" onclick="closeDeleteConfirmModal()">Cancelar</button>
+                <button class="btn btn-primary" id="btn-confirm-delete-submit" onclick="confirmExecuteCompanyDelete()" style="flex: 1; padding: 10px; background: #ef4444; color: #ffffff; border: none; font-weight: 700; box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);">
+                    <i class="fa-solid fa-trash-can"></i> Confirmar
+                </button>
             </div>
         </div>
     </div>
+
+    <!-- Universal Custom Confirmation Modal (For Watchlists, Alerts, Rules) -->
+    <div class="modal-backdrop" id="custom-action-confirm-modal">
+        <div class="modal-box" style="max-width: 420px; text-align: center; padding: 24px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);">
+            <div id="custom-confirm-icon-box" style="width: 56px; height: 56px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                <i id="custom-confirm-icon" class="fa-solid fa-triangle-exclamation" style="color: #ef4444; font-size: 1.5rem;"></i>
+            </div>
+            <h3 id="custom-confirm-title" style="margin-bottom: 8px; font-size: 1.15rem; color: var(--text-main); font-weight: 700;">Confirmar Acción</h3>
+            <p id="custom-confirm-msg" style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 22px; line-height: 1.45;">
+                ¿Estás seguro de que deseas continuar?
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn btn-outline" style="flex: 1; padding: 10px;" onclick="closeCustomConfirmModal(false)">Cancelar</button>
+                <button class="btn btn-primary" id="btn-custom-confirm-submit" onclick="closeCustomConfirmModal(true)" style="flex: 1; padding: 10px; background: #ef4444; color: #ffffff; border: none; font-weight: 700;">
+                    <i class="fa-solid fa-check"></i> Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Universal Floating Toast Notification Container -->
+    <div id="radar-toast-container" style="position: fixed; bottom: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; max-width: 380px; pointer-events: none;"></div>
 
     <!-- Bloque 7: Modal Autenticación JWT & Multi-Tenant -->
     <div class="modal-backdrop" id="auth-modal">
@@ -852,10 +874,39 @@
                     <i class="fa-solid fa-credit-card"></i> Actualizar a Premium ($99/mes)
                 </button>
             </div>
+    <!-- Lead Access / Email Gate Modal -->
+    <div class="modal-backdrop" id="lead-email-gate-modal" style="display: none; z-index: 100000; backdrop-filter: blur(12px); background: rgba(5, 11, 20, 0.88);">
+        <div class="modal-box" style="max-width: 480px; text-align: center; border: 1px solid var(--accent-cyan); box-shadow: 0 0 30px rgba(0, 229, 255, 0.2);">
+            <div class="modal-header" style="justify-content: center;">
+                <h2><i class="fa-solid fa-terminal" style="color: var(--accent-cyan);"></i> Acceso a la Terminal OFANRADAR</h2>
+            </div>
+            <div class="modal-body" style="padding-top: 10px;">
+                <p class="sub-header-text" style="margin-bottom: 20px;">
+                    Introduce tu correo electrónico profesional para iniciar tu periodo de prueba y acceder a la Terminal de Inteligencia Operativa.
+                </p>
+                <form id="lead-email-form" onsubmit="handleLeadAccessSubmit(event)">
+                    <div style="margin-bottom: 16px; text-align: left;">
+                        <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 6px;">Correo Electrónico Profesional</label>
+                        <input type="email" id="lead-access-email-input" class="custom-select" style="width: 100%; padding: 12px; font-size: 0.95rem;" placeholder="ejemplo@empresa.com" required>
+                    </div>
+                    <div id="lead-access-error-msg" style="color: var(--accent-red); font-size: 0.85rem; margin-bottom: 14px; display: none; background: rgba(225, 29, 72, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(225, 29, 72, 0.3);"></div>
+                    <button type="submit" class="btn btn-primary btn-full" id="lead-access-submit-btn" style="padding: 14px; font-size: 1rem; font-weight: 700; background: linear-gradient(135deg, #00e5ff 0%, #0077ff 100%); color: #050b14;">
+                        <i class="fa-solid fa-bolt"></i> Acceder a la Terminal
+                    </button>
+                </form>
+                <div id="lead-access-pro-upgrade-box" style="display: none; margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+                    <p style="font-size: 0.85rem; color: var(--accent-amber); margin-bottom: 12px;">¿Ya tienes cuenta o deseas acceso ilimitado a Plan Pro?</p>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-outline" style="flex: 1;" onclick="closeLeadModalOpenAuth()"><i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión</button>
+                        <button class="btn btn-primary" style="flex: 1; background: var(--brand-gold); color: #fff;" onclick="closeLeadModalOpenUpgrade()"><i class="fa-solid fa-crown"></i> Plan Pro</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script src="/static/js/analytics.js?v=9.0"></script>
-    <script src="/static/js/app.js?v=9.0"></script>
+    <script src="/static/js/analytics.js?v=10.0"></script>
+    <script src="/static/js/app.js?v=10.0"></script>
+    <script src="/static/js/onboarding.js?v=10.0"></script>
 </body>
 </html>

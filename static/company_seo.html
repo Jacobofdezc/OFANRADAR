@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{COMPANY_NAME}} - Análisis de Intención de Compra & Señales | OFANRADAR</title>
+
+    <!-- Dynamic SEO Meta Tags -->
+    <meta name="description" content="Informe de Inteligencia Económica y temperatura de compra en tiempo real para {{COMPANY_NAME}} ({{COMPANY_DOMAIN}}). Análisis firmográfico, stack tecnológico y señales de intención.">
+    <meta name="robots" content="index, follow">
+
+    <!-- OpenGraph Tags -->
+    <meta property="og:title" content="{{COMPANY_NAME}} - OFANRADAR Intent Score">
+    <meta property="og:description" content="Temperatura de compra actual: {{COMPOSITE_SCORE}}/100. Registrate en OFANRADAR para desbloquear señales de BORME, contrataciones y tech stack en vivo.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://radar.ofan.es/empresa/{{COMPANY_DOMAIN}}">
+    <meta property="og:image" content="{{COMPANY_LOGO}}">
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{COMPANY_NAME}} - OFANRADAR Economic Intelligence">
+    <meta name="twitter:description" content="Análisis de intención de compra B2B en tiempo real para {{COMPANY_NAME}}.">
+    <meta name="twitter:image" content="{{COMPANY_LOGO}}">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "{{COMPANY_NAME}}",
+      "url": "https://{{COMPANY_DOMAIN}}",
+      "logo": "{{COMPANY_LOGO}}",
+      "knowsAbout": ["Intención de Compra B2B", "Inteligencia Económica", "{{INDUSTRY}}"],
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "{{HQ_CITY}}",
+        "addressCountry": "{{HQ_COUNTRY}}"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Dataset",
+      "name": "OFANRADAR Intent Profile - {{COMPANY_NAME}}",
+      "description": "Señales económicas públicas y temperatura de compra B2B para {{COMPANY_NAME}}",
+      "provider": {
+        "@type": "Organization",
+        "name": "OFANRADAR"
+      }
+    }
+    </script>
+
+    <!-- OFANRADAR & Company Favicons -->
+    <link rel="icon" type="image/png" href="/static/favicon.png?v=10.0">
+    <link rel="shortcut icon" href="/static/favicon.png?v=10.0">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=10.0">
+
+    <style>
+        /* High-contrast theme adaptation helpers for public SEO page */
+        body.light-mode .viga-hero-desc {
+            color: var(--text-muted) !important;
+        }
+        body.light-mode .paywall-card-box {
+            background: #ffffff !important;
+            border: 1px solid var(--border-color) !important;
+            box-shadow: 0 15px 35px rgba(15, 23, 42, 0.1) !important;
+        }
+        body.light-mode .signal-preview-item {
+            background: #f8fafc !important;
+            border-color: rgba(15, 23, 42, 0.08) !important;
+        }
+        body.light-mode .ai-brief-preview-box {
+            background: rgba(2, 132, 199, 0.06) !important;
+            border-color: rgba(2, 132, 199, 0.25) !important;
+        }
+    </style>
+</head>
+<body class="dark-mode">
+
+    <!-- Top Navigation Bar (Matches landing.html) -->
+    <header class="navbar">
+        <a href="/" class="brand" style="text-decoration: none;">
+            <img src="/static/img/logo-dark.jpg?v=10.0" alt="OFANRADAR" class="brand-logo-img logo-dark-mode">
+            <img src="/static/img/logo-light.jpg?v=10.0" alt="OFANRADAR" class="brand-logo-img logo-light-mode">
+            <span class="brand-subtitle hidden-mobile" style="color: var(--text-muted); font-weight: 500; border-left: 1px solid var(--border-color); padding-left: 10px; margin-left: 2px;">Inteligencia Operativa</span>
+        </a>
+
+        <div class="header-actions">
+            <a href="/precios" class="nav-link" style="font-weight: 600; font-size: 0.88rem; color: var(--text-muted); margin-right: 6px; text-decoration: none;">
+                <i class="fa-solid fa-tag" style="color: var(--brand-gold);"></i> Precios
+            </a>
+
+            <!-- Theme Toggle Button -->
+            <button class="btn btn-outline" id="theme-toggle-btn" title="Cambiar tema de color" style="padding: 7px 10px; cursor: pointer;">
+                <i class="fa-solid fa-sun" id="theme-icon"></i>
+            </button>
+
+            <a href="/app" class="btn btn-primary" style="background: var(--text-main); color: var(--bg-dark); padding: 10px 20px; font-weight: 800; border-radius: 8px; text-decoration: none;">
+                <i class="fa-solid fa-terminal"></i> Abrir Terminal
+            </a>
+        </div>
+    </header>
+
+    <!-- LANDING SHOWCASE MINIMALISTA FOR COMPANY SEO PAGE -->
+    <div id="landing-view" style="padding-top: 20px;">
+
+        <!-- HERO COMPANY SHOWCASE SECTION -->
+        <section class="viga-nexo-hero">
+            <div class="viga-hero-grid">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                        <!-- Reliable Company Logo Avatar Container -->
+                        <div style="width: 62px; height: 62px; border-radius: 14px; background: #ffffff; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; padding: 4px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);">
+                            <img src="{{COMPANY_LOGO}}" alt="{{COMPANY_NAME}}" style="max-width: 100%; max-height: 100%; object-fit: contain;" onerror="this.onerror=null; this.src='https://www.google.com/s2/favicons?domain={{COMPANY_DOMAIN}}&sz=128';">
+                        </div>
+                        <div>
+                            <span class="text-eyebrow" style="font-size: 0.72rem; letter-spacing: 0.1em; color: var(--accent-cyan); font-weight: 700;"><i class="fa-solid fa-building"></i> FICHA PÚBLICA DE INTEL CORPORATIVA</span>
+                            <h1 style="font-family: var(--font-heading); font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin: 2px 0 0 0; line-height: 1.1;">
+                                {{COMPANY_NAME}}
+                            </h1>
+                        </div>
+                    </div>
+
+                    <p class="viga-hero-desc" style="font-size: 1.02rem; line-height: 1.6; color: var(--text-muted); margin-bottom: 20px;">
+                        Monitoreo continuo de intención de compra B2B, alertas del Registro Mercantil (BORME), vacantes de talento y migración tecnológica para <strong>{{COMPANY_DOMAIN}}</strong>.
+                    </p>
+
+                    <!-- Meta Pills Grid -->
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px;">
+                        <span style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; color: var(--text-main); display: inline-flex; align-items: center; gap: 7px; font-weight: 600;">
+                            <img src="https://www.google.com/s2/favicons?domain={{COMPANY_DOMAIN}}&sz=64" style="width: 16px; height: 16px; border-radius: 3px;" onerror="this.style.display='none'">
+                            {{COMPANY_DOMAIN}}
+                        </span>
+                        <span style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; color: var(--text-main); font-weight: 500;"><i class="fa-solid fa-industry" style="color: var(--brand-gold);"></i> {{INDUSTRY}}</span>
+                        <span style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; color: var(--text-main); font-weight: 500;"><i class="fa-solid fa-users" style="color: var(--accent-green);"></i> {{EMPLOYEE_RANGE}} empleados</span>
+                        <span style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; color: var(--text-main); font-weight: 500;"><i class="fa-solid fa-location-dot" style="color: var(--accent-red);"></i> {{HQ_CITY}}, {{HQ_COUNTRY}}</span>
+                    </div>
+
+                    <div class="viga-hero-actions">
+                        <a href="/app" class="btn btn-primary" style="background: var(--text-main); color: var(--bg-dark); padding: 14px 28px; font-weight:800; font-size: 1rem; border-radius: 8px; text-decoration: none;">
+                            <i class="fa-solid fa-bolt"></i> Ver Informe Completo en la Terminal
+                        </a>
+                        <a href="/precios" class="btn btn-outline" style="padding: 14px 24px; font-size: 0.95rem; border-radius: 8px; text-decoration: none;">
+                            <i class="fa-solid fa-crown" style="color: var(--brand-gold);"></i> Desbloquear Plan Pro
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Radar HUD Graphic Card (Live Target Visualizer for Company) -->
+                <div class="viga-radar-card" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+                    <div class="viga-radar-card-header">
+                        <div>
+                            <div class="text-eyebrow" style="font-size:0.68rem; color: var(--text-muted);"><i class="fa-solid fa-radar"></i> Radar de Intención B2B</div>
+                            <div style="font-size: 1.1rem; font-weight: 700; font-family: var(--font-heading); color: var(--text-main); margin-top:2px;">{{COMPANY_NAME}}</div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted);">{{INDUSTRY}} &middot; {{HQ_COUNTRY}}</div>
+                        </div>
+                        <span class="badge badge-intent" style="background: rgba(190, 18, 60, 0.15); color: var(--brand-gold); border: 1px solid rgba(190, 18, 60, 0.3); font-weight: 700;">{{PRIMARY_LABEL}}</span>
+                    </div>
+                    <div class="viga-radar-screen">
+                        <div class="radar-ring r1"></div>
+                        <div class="radar-ring r2"></div>
+                        <div class="radar-ring r3"></div>
+                        <div class="radar-crosshair-h"></div>
+                        <div class="radar-crosshair-v"></div>
+                        <div class="radar-sweep-arm"></div>
+                        <div class="radar-target-dot"></div>
+                        <span style="position: absolute; bottom: 10px; left: 14px; font-family: var(--font-code); font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em;">RADAR V5 / 90d / {{HQ_COUNTRY}}</span>
+                    </div>
+                    <div class="viga-radar-metrics">
+                        <div class="viga-score-row">
+                            <div>
+                                <span class="text-eyebrow" style="font-size: 0.68rem; color: var(--text-muted);">SCORE INTENCIÓN COMPUESTO</span>
+                                <div class="viga-score-num" style="color: var(--text-main);">{{COMPOSITE_SCORE}} <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">/ 100</span></div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Confianza Explicable</span>
+                                <span style="font-family: var(--font-code); font-weight: 700; color: var(--accent-green); font-size: 1.1rem;">0.92</span>
+                            </div>
+                        </div>
+                        <div style="height: 6px; background: var(--bg-card-hover); border-radius: 3px; overflow: hidden; border: 1px solid var(--border-color);">
+                            <div style="width: {{COMPOSITE_SCORE}}%; height: 100%; background: var(--brand-gold); border-radius: 3px;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted); margin-top: 6px;">
+                            <span><i class="fa-solid fa-sparkles" style="color:var(--brand-gold);"></i> {{PRIMARY_LABEL}}</span>
+                            <span style="font-family: var(--font-code); font-size: 0.72rem;"><i class="fa-solid fa-circle-dot" style="color: var(--accent-green);"></i> Monitoreo Activo</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: PLG BLUR PAYWALL SIGNALS SHOWCASE -->
+        <section class="viga-section">
+            <div class="viga-container">
+                <div style="text-align: center; max-width: 700px; margin: 0 auto 30px;">
+                    <span class="text-eyebrow" style="font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-cyan);">Detección de Señales en Vivo</span>
+                    <h2 style="font-family: var(--font-heading); font-size: 2.1rem; font-weight: 800; color: var(--text-main); margin-top: 6px;">
+                        Eventos de Compra & Movimientos Estratégicos de {{COMPANY_NAME}}
+                    </h2>
+                </div>
+
+                <!-- Paywall Container with Frosted Glass Overlay -->
+                <div style="position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--border-color); background: var(--bg-card); box-shadow: 0 15px 40px rgba(0,0,0,0.15);">
+                    <!-- Blurred Content underneath -->
+                    <div style="padding: 28px; filter: blur(7px); user-select: none; pointer-events: none; opacity: 0.55;">
+                        <h3 style="font-family: var(--font-heading); font-size: 1.2rem; color: var(--text-main); margin-bottom: 16px;">
+                            <i class="fa-solid fa-bolt" style="color: var(--brand-gold);"></i> Señales Correlacionadas (Últimos 90 días)
+                        </h3>
+
+                        <!-- Signal Item 1 -->
+                        <div class="signal-preview-item" style="margin-bottom: 12px; background: var(--bg-card-hover); padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-weight: 700; color: var(--brand-gold); font-size: 0.85rem;"><i class="fa-solid fa-scroll"></i> [REGISTRO MERCANTIL / BORME]</span>
+                                <div style="color: var(--text-main); font-size: 0.9rem; margin-top: 2px;">Nombramiento de nuevos apoderados corporativos y reestructuración de capital.</div>
+                            </div>
+                            <span style="font-family: var(--font-code); font-weight: 700; color: var(--accent-green); font-size: 0.9rem;">+24 pt</span>
+                        </div>
+
+                        <!-- Signal Item 2 -->
+                        <div class="signal-preview-item" style="margin-bottom: 12px; background: var(--bg-card-hover); padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-weight: 700; color: var(--accent-cyan); font-size: 0.85rem;"><i class="fa-solid fa-briefcase"></i> [HIRING SURGE TALENTO TECH]</span>
+                                <div style="color: var(--text-main); font-size: 0.9rem; margin-top: 2px;">Aceleración (+38%) en vacantes abiertas para Senior Engineers, DevOps e Inteligencia Artificial.</div>
+                            </div>
+                            <span style="font-family: var(--font-code); font-weight: 700; color: var(--accent-green); font-size: 0.9rem;">+32 pt</span>
+                        </div>
+
+                        <!-- Signal Item 3 -->
+                        <div class="signal-preview-item" style="margin-bottom: 16px; background: var(--bg-card-hover); padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-weight: 700; color: var(--accent-purple); font-size: 0.85rem;"><i class="fa-solid fa-network-wired"></i> [MIGRACIÓN TECH STACK DNS/CT LOGS]</span>
+                                <div style="color: var(--text-main); font-size: 0.9rem; margin-top: 2px;">Adopción de infraestructura Cloud AWS, Snowflake Data Warehouse y Datadog APM.</div>
+                            </div>
+                            <span style="font-family: var(--font-code); font-weight: 700; color: var(--accent-green); font-size: 0.9rem;">+18 pt</span>
+                        </div>
+
+                        <!-- AI Executive Brief Block -->
+                        <div class="ai-brief-preview-box" style="background: var(--bg-card-hover); border: 1px solid var(--accent-cyan); padding: 20px; border-radius: 10px;">
+                            <h4 style="margin: 0 0 8px 0; color: var(--accent-cyan); font-family: var(--font-heading); font-size: 1rem;"><i class="fa-solid fa-robot"></i> Resumen Ejecutivo de Inteligencia Artificial (LLM Brief)</h4>
+                            <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.6; margin: 0;">
+                                {{COMPANY_NAME}} muestra una aceleración sostenida en la reestructuración ejecutiva e inversión en infraestructura tecnológica durante el último trimestre, posicionándose en una ventana de oportunidad óptima para soluciones B2B...
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Overlay Paywall CTA Card -->
+                    <div class="paywall-overlay" style="position: absolute; inset: 0; background: rgba(7, 9, 15, 0.82); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 10;">
+                        <div class="paywall-card-box" style="background: var(--bg-card); border: 1px solid var(--brand-gold); border-radius: 14px; padding: 32px 28px; max-width: 480px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+                            <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(190, 18, 60, 0.15); border: 1px solid rgba(190, 18, 60, 0.4); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; color: var(--brand-gold); font-size: 1.4rem;">
+                                <i class="fa-solid fa-lock"></i>
+                            </div>
+                            <h3 style="font-family: var(--font-heading); font-size: 1.35rem; color: var(--text-main); font-weight: 800; margin: 0 0 10px 0;">
+                                Desbloquea las Señales en Vivo de {{COMPANY_NAME}}
+                            </h3>
+                            <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.55; margin-bottom: 22px;">
+                                Accede al historial completo de eventos de contratación, actas del BORME, migraciones tecnológicas y la síntesis ejecutiva por Agente IA.
+                            </p>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <a href="/app?auth=register" class="btn btn-primary" style="padding: 14px 22px; font-weight: 800; font-size: 0.95rem; background: linear-gradient(135deg, #be123c 0%, #e11d48 100%); color: #ffffff; text-decoration: none; border-radius: 8px; border: none; box-shadow: 0 4px 18px rgba(225, 29, 72, 0.4); display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <i class="fa-solid fa-bolt"></i> Registrarse Gratis en la Terminal
+                                </a>
+                                <a href="/app" class="btn btn-outline" style="padding: 11px; font-weight: 600; font-size: 0.88rem; text-decoration: none; border-radius: 8px;">
+                                    <i class="fa-solid fa-right-to-bracket"></i> Ya tengo cuenta — Iniciar Sesión
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER (Matches landing.html) -->
+        <footer style="margin-top: 60px; padding: 40px 24px; border-top: 1px solid var(--border-color); background: var(--bg-dark); color: var(--text-muted); font-size: 0.85rem;">
+            <div style="max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+                <div>
+                    <div style="font-family: var(--font-heading); font-weight: 800; color: var(--text-main); font-size: 1.1rem; margin-bottom: 4px;">OFANRADAR</div>
+                    <div>Plataforma de Inteligencia Económica B2B en Tiempo Real.</div>
+                </div>
+                <div style="display: flex; gap: 20px;">
+                    <a href="/pricing" style="color: var(--text-muted); text-decoration: none;">Precios</a>
+                    <a href="/app" style="color: var(--text-muted); text-decoration: none;">Terminal</a>
+                    <a href="/empresa/{{COMPANY_DOMAIN}}" style="color: var(--accent-cyan); text-decoration: none;">Perfil {{COMPANY_NAME}}</a>
+                </div>
+            </div>
+            <div style="max-width: 1100px; margin: 20px auto 0; text-align: center; border-top: 1px solid var(--border-color); padding-top: 20px; font-size: 0.78rem; color: var(--text-dim);">
+                &copy; 2026 OFANRADAR. Todos los derechos reservados.
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Theme Switcher Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle-btn');
+            const themeIcon = document.getElementById('theme-icon');
+            const savedTheme = localStorage.getItem('ofanradar_theme') || 'dark';
+
+            if (savedTheme === 'light') {
+                document.body.classList.remove('dark-mode');
+                document.body.classList.add('light-mode');
+                if (themeIcon) themeIcon.className = 'fa-solid fa-moon';
+            }
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    if (document.body.classList.contains('dark-mode')) {
+                        document.body.classList.remove('dark-mode');
+                        document.body.classList.add('light-mode');
+                        localStorage.setItem('ofanradar_theme', 'light');
+                        if (themeIcon) themeIcon.className = 'fa-solid fa-moon';
+                    } else {
+                        document.body.classList.remove('light-mode');
+                        document.body.classList.add('dark-mode');
+                        localStorage.setItem('ofanradar_theme', 'dark');
+                        if (themeIcon) themeIcon.className = 'fa-solid fa-sun';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

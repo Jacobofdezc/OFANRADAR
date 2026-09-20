@@ -21,9 +21,133 @@ async function initApp() {
     loadFiltersFromURL();
     handleCheckoutSuccessParam();
     setupAppViewRouting();
+    initSidebarCollapseState();
+    checkTerminalAccessGate();
     await loadUserProfile();
     await fetchWatchlists();
     await loadCompanyList();
+}
+
+function initSidebarCollapseState() {
+    const saved = localStorage.getItem('ofanradar_sidebar_collapsed');
+    if (saved === 'true') {
+        toggleSidebarCollapse(true);
+    }
+}
+
+function toggleSidebarCollapse(forceState) {
+    const layout = document.querySelector('.terminal-layout');
+    if (!layout) return;
+
+    const isCollapsed = forceState !== undefined ? forceState : !layout.classList.contains('sidebar-collapsed');
+    
+    if (isCollapsed) {
+        layout.classList.add('sidebar-collapsed');
+        localStorage.setItem('ofanradar_sidebar_collapsed', 'true');
+    } else {
+        layout.classList.remove('sidebar-collapsed');
+        localStorage.setItem('ofanradar_sidebar_collapsed', 'false');
+    }
+
+    const expandTab = document.getElementById('sidebar-expand-tab');
+    if (expandTab) {
+        if (isCollapsed) {
+            expandTab.classList.remove('hidden');
+        } else {
+            expandTab.classList.add('hidden');
+        }
+    }
+
+    const toggleText = document.getElementById('sidebar-toggle-text');
+    const toggleIcon = document.getElementById('sidebar-toggle-icon');
+    if (toggleText) toggleText.textContent = isCollapsed ? 'Mostrar Columna' : 'Ocultar Columna';
+    if (toggleIcon) toggleIcon.className = isCollapsed ? 'fa-solid fa-angles-right' : 'fa-solid fa-bars-staggered';
+}
+
+function checkTerminalAccessGate() {
+    const token = localStorage.getItem('authToken');
+    const leadEmail = localStorage.getItem('ofanradar_lead_email');
+
+    if (!token && !leadEmail) {
+        const modal = document.getElementById('lead-email-gate-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+}
+
+async function handleLeadAccessSubmit(event) {
+    event.preventDefault();
+    const emailInput = document.getElementById('lead-access-email-input');
+    const errorMsg = document.getElementById('lead-access-error-msg');
+    const submitBtn = document.getElementById('lead-access-submit-btn');
+    const upgradeBox = document.getElementById('lead-access-pro-upgrade-box');
+
+    if (!emailInput || !emailInput.value) return;
+
+    const email = emailInput.value.trim();
+    if (errorMsg) errorMsg.style.display = 'none';
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Verificando...';
+    }
+
+    try {
+        const resp = await fetch('/v1/auth/lead-access', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email })
+        });
+        const res = await resp.json();
+
+        if (res.allowed === false) {
+            if (errorMsg) {
+                errorMsg.textContent = res.message || `El correo '${email}' ya utilizó su periodo de prueba. Inicia sesión o actualiza a Plan Pro.`;
+                errorMsg.style.display = 'block';
+            }
+            if (upgradeBox) upgradeBox.style.display = 'block';
+        } else if (res.allowed === true && res.token) {
+            localStorage.setItem('authToken', res.token);
+            localStorage.setItem('ofanradar_lead_email', res.email);
+            const userObj = {
+                user_id: res.user_id || 'lead_user',
+                email: res.email,
+                full_name: res.full_name,
+                role: res.role,
+                subscription_status: res.subscription_status
+            };
+            localStorage.setItem('radar_user', JSON.stringify(userObj));
+
+            const modal = document.getElementById('lead-email-gate-modal');
+            if (modal) modal.style.display = 'none';
+
+            await loadUserProfile();
+            await loadCompanyList();
+        }
+    } catch (err) {
+        console.error('Lead access request error:', err);
+        if (errorMsg) {
+            errorMsg.textContent = 'Error al verificar el acceso. Inténtelo de nuevo.';
+            errorMsg.style.display = 'block';
+        }
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-bolt"></i> Acceder a la Terminal';
+        }
+    }
+}
+
+function closeLeadModalOpenAuth() {
+    const modal = document.getElementById('lead-email-gate-modal');
+    if (modal) modal.style.display = 'none';
+    openAuthModal();
+}
+
+function closeLeadModalOpenUpgrade() {
+    const modal = document.getElementById('lead-email-gate-modal');
+    if (modal) modal.style.display = 'none';
+    openUpgradeModal();
 }
 
 function setupAppViewRouting() {
@@ -352,6 +476,15 @@ async function loadCompanyList() {
             return;
         }
 
+        // Deduplicate companies array by domain/canonical_name/id
+        const seenKeys = new Set();
+        companies = companies.filter(c => {
+            const key = (c.domain || c.canonical_name || c.id || '').toLowerCase().trim();
+            if (!key || seenKeys.has(key)) return false;
+            seenKeys.add(key);
+            return true;
+        });
+
         container.innerHTML = '';
         const companyExists = companies.some(c => c.id === currentCompanyId);
         if (!companyExists && companies.length > 0) {
@@ -374,12 +507,17 @@ async function loadCompanyList() {
             const logoUrl = company.logo_url || `https://logo.clearbit.com/${company.domain}`;
 
             card.innerHTML = `
-                <div class="card-top">
-                    <span class="company-name" style="display:flex; align-items:center; gap:8px;">
-                        <img src="${logoUrl}" class="mini-company-logo" onerror="this.style.display='none'">
-                        ${escapeHtml(company.canonical_name)}
+                <div class="card-top" style="display:flex; justify-content:space-between; align-items:center; width:100%; min-width:0; gap:8px;">
+                    <span class="company-name" style="display:flex; align-items:center; gap:8px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                        <img src="${logoUrl}" class="mini-company-logo" onerror="this.style.display='none'" style="width:16px; height:16px; border-radius:3px; flex-shrink:0;">
+                        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(company.canonical_name)}</span>
                     </span>
-                    <span class="card-score-badge ${scoreBadgeClass}">${compScore}</span>
+                    <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                        <span class="card-score-badge ${scoreBadgeClass}">${compScore}</span>
+                        <button class="btn-delete-company-x" onclick="removeCompanyFromList(event, '${company.id}', '${escapeHtml(company.canonical_name).replace(/'/g, "\\'")}')" title="Eliminar empresa de la lista">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="card-meta-line">
                     <span>${escapeHtml(company.domain)}</span>
@@ -398,6 +536,132 @@ async function loadCompanyList() {
         console.error('Failed to load companies:', err);
         container.innerHTML = '<div class="loading-spinner" style="color:var(--accent-red)">Error de conexión con el servidor Business Radar.</div>';
     }
+}
+
+let pendingDeleteCompanyId = null;
+
+function removeCompanyFromList(event, companyId, companyName) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    pendingDeleteCompanyId = companyId;
+    const nameElem = document.getElementById('delete-confirm-company-name');
+    if (nameElem) {
+        nameElem.textContent = companyName ? `'${companyName}'` : 'esta empresa';
+    }
+    const modal = document.getElementById('delete-confirm-modal');
+    if (modal) modal.classList.add('open');
+}
+
+function closeDeleteConfirmModal() {
+    pendingDeleteCompanyId = null;
+    const modal = document.getElementById('delete-confirm-modal');
+    if (modal) modal.classList.remove('open');
+}
+
+async function confirmExecuteCompanyDelete() {
+    if (!pendingDeleteCompanyId) return;
+    const companyId = pendingDeleteCompanyId;
+    closeDeleteConfirmModal();
+
+    try {
+        if (activeWatchlistId) {
+            await authFetch(`/v1/watchlists/${activeWatchlistId}/companies/${companyId}`, { method: 'DELETE' });
+        } else {
+            await authFetch(`/v1/companies/${companyId}`, { method: 'DELETE' });
+        }
+        const card = document.querySelector(`.company-card[data-id="${companyId}"]`);
+        if (card) {
+            card.remove();
+        }
+        showToast('Empresa eliminada del listado', 'success');
+        await loadCompanyList();
+    } catch (e) {
+        console.error('Error removing company:', e);
+        const card = document.querySelector(`.company-card[data-id="${companyId}"]`);
+        if (card) {
+            card.remove();
+        }
+    }
+}
+
+let customConfirmResolver = null;
+
+function showCustomConfirm({ title, message, iconClass = 'fa-solid fa-triangle-exclamation', confirmBtnText = 'Confirmar', isDanger = true }) {
+    return new Promise((resolve) => {
+        customConfirmResolver = resolve;
+        const titleElem = document.getElementById('custom-confirm-title');
+        const msgElem = document.getElementById('custom-confirm-msg');
+        const iconElem = document.getElementById('custom-confirm-icon');
+        const submitBtn = document.getElementById('btn-custom-confirm-submit');
+        const modal = document.getElementById('custom-action-confirm-modal');
+
+        if (titleElem) titleElem.textContent = title || 'Confirmar Acción';
+        if (msgElem) msgElem.innerHTML = message || '¿Deseas continuar?';
+        if (iconElem) iconElem.className = iconClass;
+        if (submitBtn) {
+            submitBtn.innerHTML = `<i class="fa-solid fa-check"></i> ${confirmBtnText}`;
+            submitBtn.style.background = isDanger ? '#ef4444' : 'var(--brand-gold)';
+        }
+
+        if (modal) modal.classList.add('open');
+    });
+}
+
+function closeCustomConfirmModal(confirmed) {
+    const modal = document.getElementById('custom-action-confirm-modal');
+    if (modal) modal.classList.remove('open');
+    if (customConfirmResolver) {
+        customConfirmResolver(confirmed);
+        customConfirmResolver = null;
+    }
+}
+
+function showToast(message, type = 'info', duration = 3500) {
+    const container = document.getElementById('radar-toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    let border = 'var(--accent-cyan)';
+    let icon = 'fa-solid fa-circle-info';
+
+    if (type === 'success') {
+        border = '#10b981';
+        icon = 'fa-solid fa-circle-check';
+    } else if (type === 'error') {
+        border = '#ef4444';
+        icon = 'fa-solid fa-triangle-exclamation';
+    } else if (type === 'warning') {
+        border = '#f59e0b';
+        icon = 'fa-solid fa-triangle-exclamation';
+    }
+
+    toast.style.cssText = `
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid ${border};
+        border-radius: 8px;
+        padding: 12px 16px;
+        color: var(--text-main);
+        font-size: 0.85rem;
+        font-weight: 500;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        pointer-events: auto;
+        backdrop-filter: blur(8px);
+    `;
+
+    toast.innerHTML = `<i class="${icon}" style="color:${border}; font-size: 1.1rem; flex-shrink: 0;"></i> <span>${escapeHtml(message)}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
 }
 
 function generateSparklineSVG(points, delta) {
@@ -516,16 +780,24 @@ function renderWatchlists() {
 
 async function deleteWatchlist(e, watchlistId) {
     e.stopPropagation();
-    if (!confirm('¿Estás seguro de eliminar esta lista de vigilancia?')) return;
+    const confirmed = await showCustomConfirm({
+        title: '¿Eliminar lista de vigilancia?',
+        message: 'Esta acción eliminará la lista y todas sus asociaciones de tu directorio.',
+        confirmBtnText: 'Eliminar Lista',
+        isDanger: true
+    });
+    if (!confirmed) return;
 
     try {
         const resp = await authFetch(`/v1/watchlists/${watchlistId}`, { method: 'DELETE' });
         if (resp.ok) {
             if (activeWatchlistId === watchlistId) activeWatchlistId = null;
+            showToast('Lista de vigilancia eliminada con éxito', 'success');
             await fetchWatchlists();
         }
     } catch (err) {
         console.error('Failed to delete watchlist:', err);
+        showToast('Error al eliminar la lista de vigilancia', 'error');
     }
 }
 
@@ -1197,10 +1469,24 @@ function renderFilteredCompanyList(companies) {
         const intent = company.latest_intent || { composite_score: 0 };
         const compScore = Math.round(intent.composite_score || 0);
 
+        let scoreBadgeClass = '';
+        if (compScore >= 70) scoreBadgeClass = 'high';
+        if ((intent.financial_stress || 0) >= 60) scoreBadgeClass = 'distress';
+
+        const logoUrl = company.logo_url || `https://logo.clearbit.com/${company.domain}`;
+
         card.innerHTML = `
-            <div class="card-top">
-                <span class="company-name">${escapeHtml(company.canonical_name)}</span>
-                <span class="card-score-badge high">${compScore}</span>
+            <div class="card-top" style="display:flex; justify-content:space-between; align-items:center; width:100%; min-width:0; gap:8px;">
+                <span class="company-name" style="display:flex; align-items:center; gap:8px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                    <img src="${logoUrl}" class="mini-company-logo" onerror="this.style.display='none'" style="width:16px; height:16px; border-radius:3px; flex-shrink:0;">
+                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(company.canonical_name)}</span>
+                </span>
+                <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                    <span class="card-score-badge ${scoreBadgeClass}">${compScore}</span>
+                    <button class="btn-delete-company-x" onclick="removeCompanyFromList(event, '${company.id}', '${escapeHtml(company.canonical_name).replace(/'/g, "\\'")}')" title="Eliminar empresa de la lista">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
             </div>
             <div class="card-meta-line">
                 <span>${escapeHtml(company.domain)}</span>
@@ -1265,16 +1551,31 @@ async function handleEnrichSubmit(e) {
 
         const company = await resp.json();
         if (resp.ok) {
+            const logoUrl = company.logo_url || `https://logo.clearbit.com/${company.domain}`;
             if (statusBox) {
-                statusBox.innerHTML = `<div style="color:var(--accent-green); font-weight:700;"><i class="fa-solid fa-check-circle"></i> Empresa '${escapeHtml(company.canonical_name)}' enriquecida con éxito!</div>`;
+                statusBox.innerHTML = `
+                    <div style="background: rgba(15, 23, 42, 0.9); border: 1px solid var(--accent-cyan); border-radius: 8px; padding: 14px; margin-top: 10px;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                            <img src="${logoUrl}" style="width: 38px; height: 38px; border-radius: 6px; background: #fff; padding: 2px;" onerror="this.style.display='none'">
+                            <div>
+                                <h4 style="margin: 0; font-size: 1rem; color: var(--text-main); font-weight: 700;">${escapeHtml(company.canonical_name)}</h4>
+                                <span style="font-size: 0.78rem; color: var(--accent-cyan); font-family: var(--font-code);">${escapeHtml(company.domain)}</span>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 10px;">
+                            <div><i class="fa-solid fa-industry"></i> <strong>Sector:</strong> ${escapeHtml(company.industry || 'Software')}</div>
+                            <div><i class="fa-solid fa-users"></i> <strong>Plantilla:</strong> ${escapeHtml(company.employee_range || '50-200')}</div>
+                            <div><i class="fa-solid fa-location-dot"></i> <strong>Sede:</strong> ${escapeHtml(company.hq_city || 'Madrid')}, ${company.hq_country}</div>
+                            <div><i class="fa-solid fa-file-contract"></i> <strong>Origen:</strong> Clearbit Firmographics</div>
+                        </div>
+                        <div style="margin-top: 12px; text-align: right;">
+                            <button class="btn btn-primary btn-sm" type="button" onclick="finishEnrichmentView('${company.id}')" style="background: var(--brand-gold); color: #fff;">
+                                <i class="fa-solid fa-folder-plus"></i> Abrir Ficha en Directorio
+                            </button>
+                        </div>
+                    </div>
+                `;
             }
-            setTimeout(async () => {
-                closeEnrichModal();
-                domainInput.value = '';
-                if (submitBtn) submitBtn.disabled = false;
-                await loadCompanyList();
-                await selectCompany(company.id);
-            }, 1200);
         } else {
             if (statusBox) {
                 statusBox.innerHTML = `<div style="color:var(--accent-red); font-weight:700;"><i class="fa-solid fa-times-circle"></i> Error: ${escapeHtml(company.detail || 'No se pudo enriquecer el dominio.')}</div>`;
@@ -1288,6 +1589,16 @@ async function handleEnrichSubmit(e) {
         }
         if (submitBtn) submitBtn.disabled = false;
     }
+}
+
+async function finishEnrichmentView(companyId) {
+    closeEnrichModal();
+    const domainInput = document.getElementById('enrich-domain-input');
+    if (domainInput) domainInput.value = '';
+    const submitBtn = document.getElementById('btn-submit-enrich');
+    if (submitBtn) submitBtn.disabled = false;
+    await loadCompanyList();
+    await selectCompany(companyId);
 }
 
 /* ==========================================
@@ -1742,17 +2053,26 @@ async function testTriggerAlert(ruleId) {
 }
 
 async function deleteAlertRule(ruleId) {
-    if (!confirm('¿Desea eliminar esta regla de alerta proactiva?')) return;
+    const confirmed = await showCustomConfirm({
+        title: '¿Eliminar regla de alerta?',
+        message: 'Se cancelará la monitorización proactiva y los envíos de webhooks para esta regla.',
+        confirmBtnText: 'Eliminar Regla',
+        isDanger: true
+    });
+    if (!confirmed) return;
+
     try {
         const resp = await authFetch(`/v1/alerts/subscriptions/${ruleId}`, { method: 'DELETE' });
         if (resp.ok) {
+            showToast('Regla de alerta eliminada correctamente', 'success');
             fetchAlertSubscriptions();
         } else {
             const err = await resp.json();
-            alert(`Acceso Denegado: ${err.detail || 'Solo administradores pueden eliminar reglas'}`);
+            showToast(`Acceso Denegado: ${err.detail || 'Solo administradores pueden eliminar reglas'}`, 'error');
         }
     } catch (err) {
         console.error('Delete alert rule failed:', err);
+        showToast('Error al eliminar la regla de alerta', 'error');
     }
 }
 
