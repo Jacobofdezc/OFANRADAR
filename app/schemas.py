@@ -39,6 +39,7 @@ class IntentSnapshotResponse(BaseModel):
     confidence_score: float
     signal_count: int
     attribution_matrix: List[SignalAttribution]
+    institutional_dossier: Optional[Dict[str, Any]] = None
     computed_at: datetime.datetime
 
 

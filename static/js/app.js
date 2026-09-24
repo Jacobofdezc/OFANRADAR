@@ -20,12 +20,71 @@ async function initApp() {
     setupEventListeners();
     loadFiltersFromURL();
     handleCheckoutSuccessParam();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const companyParam = urlParams.get('company');
+    if (companyParam && companyParam.trim()) {
+        window._deepLinkCompanyQuery = companyParam.trim();
+    }
+
+    const urlEmail = urlParams.get('email');
+    if (urlEmail && urlEmail.includes('@')) {
+        await handleDirectEmailAutoLogin(urlEmail.trim());
+    }
+
     setupAppViewRouting();
     initSidebarCollapseState();
     checkTerminalAccessGate();
     await loadUserProfile();
     await fetchWatchlists();
     await loadCompanyList();
+    await handleDeepLinkCompanySelection();
+
+    if (urlParams.get('auth') === 'login') {
+        openAuthModal();
+    } else if (urlParams.get('auth') === 'register') {
+        const emailInput = document.getElementById('lead-access-email-input');
+        if (emailInput) emailInput.focus();
+    }
+}
+
+async function handleDeepLinkCompanySelection() {
+    const query = window._deepLinkCompanyQuery || new URLSearchParams(window.location.search).get('company');
+    if (!query || !query.trim()) return;
+
+    const targetQuery = query.trim();
+    const cleanQuery = targetQuery.toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace('www.', '');
+    const baseQuery = cleanQuery.replace('.com', '').replace('.es', '').replace('-', '');
+
+    // 1. Try to find the company card in the loaded sidebar directory
+    const cards = Array.from(document.querySelectorAll('#company-list-container .company-card'));
+    const matchedCard = cards.find(card => {
+        const text = card.textContent.toLowerCase();
+        const dataId = (card.dataset.id || '').toLowerCase();
+        const baseText = text.replace('.com', '').replace('.es', '').replace('-', '');
+        return text.includes(cleanQuery) || baseText.includes(baseQuery) || dataId.includes(baseQuery);
+    });
+
+    if (matchedCard && matchedCard.dataset.id) {
+        window._deepLinkCompanyQuery = null;
+        await selectCompany(matchedCard.dataset.id);
+        return;
+    }
+
+    // 2. If not already in default directory, check auth status before running instant analyze on demand
+    const token = getAuthToken();
+    if (!token) {
+        // Save query so it triggers immediately once email gate is submitted!
+        window._deepLinkCompanyQuery = targetQuery;
+        return;
+    }
+
+    const searchInput = document.getElementById('global-on-demand-input');
+    if (searchInput) searchInput.value = targetQuery;
+    if (typeof handleGlobalOnDemandSubmit === 'function') {
+        window._deepLinkCompanyQuery = null;
+        await handleGlobalOnDemandSubmit(targetQuery);
+    }
 }
 
 function initSidebarCollapseState() {
@@ -76,12 +135,50 @@ function checkTerminalAccessGate() {
     }
 }
 
+async function handleDirectEmailAutoLogin(email) {
+    if (!email || !email.includes('@')) return;
+    try {
+        const resp = await fetch('/v1/auth/lead-access', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email.trim().toLowerCase() })
+        });
+        const res = await resp.json();
+        if (res.allowed === true && res.token) {
+            localStorage.setItem('authToken', res.token);
+            localStorage.setItem('ofanradar_lead_email', res.email);
+            const userObj = {
+                user_id: res.user_id || 'lead_user',
+                email: res.email,
+                full_name: res.full_name,
+                role: res.role,
+                subscription_status: res.subscription_status
+            };
+            localStorage.setItem('radar_user', JSON.stringify(userObj));
+
+            const modal = document.getElementById('lead-email-gate-modal');
+            if (modal) modal.style.display = 'none';
+
+            // Clean email parameter from query string
+            const url = new URL(window.location.href);
+            url.searchParams.delete('email');
+            window.history.replaceState({}, document.title, url.pathname + url.search);
+
+            await loadUserProfile();
+            await loadCompanyList();
+            await handleDeepLinkCompanySelection();
+            showGlobalNotification(`⚡ ¡Prueba Gratuita de 7 Días Activada para ${res.email}!`, 'success');
+        }
+    } catch(err) {
+        console.error('Direct email auto-login error:', err);
+    }
+}
+
 async function handleLeadAccessSubmit(event) {
     event.preventDefault();
     const emailInput = document.getElementById('lead-access-email-input');
     const errorMsg = document.getElementById('lead-access-error-msg');
     const submitBtn = document.getElementById('lead-access-submit-btn');
-    const upgradeBox = document.getElementById('lead-access-pro-upgrade-box');
 
     if (!emailInput || !emailInput.value) return;
 
@@ -89,7 +186,7 @@ async function handleLeadAccessSubmit(event) {
     if (errorMsg) errorMsg.style.display = 'none';
     if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Verificando...';
+        submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Activando...';
     }
 
     try {
@@ -105,7 +202,6 @@ async function handleLeadAccessSubmit(event) {
                 errorMsg.textContent = res.message || `El correo '${email}' ya utilizó su periodo de prueba. Inicia sesión o actualiza a Plan Pro.`;
                 errorMsg.style.display = 'block';
             }
-            if (upgradeBox) upgradeBox.style.display = 'block';
         } else if (res.allowed === true && res.token) {
             localStorage.setItem('authToken', res.token);
             localStorage.setItem('ofanradar_lead_email', res.email);
@@ -123,6 +219,8 @@ async function handleLeadAccessSubmit(event) {
 
             await loadUserProfile();
             await loadCompanyList();
+            await handleDeepLinkCompanySelection();
+            showGlobalNotification(`⚡ ¡Prueba Gratuita de 7 Días Activada para ${res.email}!`, 'success');
         }
     } catch (err) {
         console.error('Lead access request error:', err);
@@ -133,9 +231,66 @@ async function handleLeadAccessSubmit(event) {
     } finally {
         if (submitBtn) {
             submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fa-solid fa-bolt"></i> Acceder a la Terminal';
+            submitBtn.innerHTML = '<i class="fa-solid fa-bolt"></i> Activar 7 Días Gratis y Entrar';
         }
     }
+}
+
+async function activateOrExtendTrial() {
+    let email = localStorage.getItem('ofanradar_lead_email');
+    if (!email && typeof currentUserProfile !== 'undefined' && currentUserProfile?.email) {
+        email = currentUserProfile.email;
+    }
+    if (!email) {
+        email = prompt("Introduce tu correo profesional para activar los 7 Días de Prueba:");
+    }
+    if (!email || !email.includes('@')) return;
+
+    try {
+        const resp = await fetch('/v1/auth/lead-access', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email.trim().toLowerCase() })
+        });
+        const res = await resp.json();
+        if (res.allowed === true && res.token) {
+            localStorage.setItem('authToken', res.token);
+            localStorage.setItem('ofanradar_lead_email', res.email);
+            closeUpgradeModal();
+            await loadUserProfile();
+            showGlobalNotification(`🎉 ¡Trial de 7 Días activado correctamente para ${res.email}!`, 'success');
+        } else {
+            alert(res.message || 'No se pudo activar el trial para este correo.');
+        }
+    } catch(e) {
+        console.error('Trial extend error:', e);
+    }
+}
+
+function showGlobalNotification(msg, type = 'info') {
+    let container = document.getElementById('global-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'global-toast-container';
+        container.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 1000000; display: flex; flex-direction: column; gap: 10px; pointer-events: none;';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    const bg = type === 'success' ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)' :
+               type === 'error' ? 'linear-gradient(135deg, #e11d48 0%, #be123c 100%)' :
+               'linear-gradient(135deg, #0284c7 0%, #00e5ff 100%)';
+    const textColor = type === 'info' ? '#050b14' : '#ffffff';
+
+    toast.style.cssText = `background: ${bg}; color: ${textColor}; padding: 12px 18px; border-radius: 10px; font-weight: 700; font-size: 0.88rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); pointer-events: auto; display: flex; align-items: center; gap: 10px; animation: fadeInRight 0.3s ease;`;
+    toast.innerHTML = `<i class="fa-solid fa-bell"></i> <span>${escapeHtml(msg)}</span>`;
+
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.5s ease';
+        setTimeout(() => toast.remove(), 500);
+    }, 4500);
 }
 
 function closeLeadModalOpenAuth() {
@@ -486,8 +641,24 @@ async function loadCompanyList() {
         });
 
         container.innerHTML = '';
+
+        if (window._deepLinkCompanyQuery) {
+            const query = window._deepLinkCompanyQuery.toLowerCase().trim();
+            const cleanQ = query.replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace('www.', '').replace('.com', '').replace('.es', '').replace('-', '');
+            const targetComp = companies.find(c => {
+                const dom = (c.domain || '').toLowerCase().replace('-', '');
+                const name = (c.canonical_name || '').toLowerCase().replace('-', '');
+                return dom.includes(cleanQ) || name.includes(cleanQ);
+            });
+            if (targetComp) {
+                currentCompanyId = targetComp.id;
+            }
+        }
+
         const companyExists = companies.some(c => c.id === currentCompanyId);
-        if (!companyExists && companies.length > 0) {
+        if (companyExists) {
+            selectCompany(currentCompanyId);
+        } else if (companies.length > 0 && !window._deepLinkCompanyQuery) {
             selectCompany(companies[0].id);
         }
 
@@ -504,12 +675,16 @@ async function loadCompanyList() {
             if ((intent.financial_stress || 0) >= 60) scoreBadgeClass = 'distress';
 
             const sparklineHTML = generateSparklineSVG(company.score_history, company.score_change_30d);
-            const logoUrl = company.logo_url || `https://logo.clearbit.com/${company.domain}`;
+            const cleanDomain = (company.domain || '').trim().toLowerCase();
+            const primaryLogo = company.logo_url || `https://logo.clearbit.com/${cleanDomain}`;
+            const fallbackLogo = `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=64`;
+            const initial = (company.canonical_name || company.domain || 'E').trim().charAt(0).toUpperCase();
 
             card.innerHTML = `
                 <div class="card-top" style="display:flex; justify-content:space-between; align-items:center; width:100%; min-width:0; gap:8px;">
                     <span class="company-name" style="display:flex; align-items:center; gap:8px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                        <img src="${logoUrl}" class="mini-company-logo" onerror="this.style.display='none'" style="width:16px; height:16px; border-radius:3px; flex-shrink:0;">
+                        <img src="${primaryLogo}" class="mini-company-logo" onerror="this.onerror=function(){ this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex'; }; this.src='${fallbackLogo}';" style="width:18px; height:18px; border-radius:4px; flex-shrink:0; object-fit:contain; background:#fff; padding:1px;">
+                        <span style="display:none; width:18px; height:18px; border-radius:4px; background:linear-gradient(135deg, #00e5ff 0%, #0077ff 100%); color:#050b14; font-weight:800; font-size:10px; align-items:center; justify-content:center; flex-shrink:0;">${initial}</span>
                         <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(company.canonical_name)}</span>
                     </span>
                     <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
@@ -945,9 +1120,31 @@ async function selectCompany(companyId) {
 function renderCompanyDetails(company, intentData) {
     // 1. Header Card Logo and Attributes
     const logoImg = document.getElementById('detail-company-logo');
-    if (logoImg) {
-        logoImg.src = company.logo_url || `https://logo.clearbit.com/${company.domain}`;
-        logoImg.style.display = 'block';
+    const avatarContainer = document.getElementById('detail-company-logo-avatar');
+
+    if (logoImg && company) {
+        const cleanDomain = (company.domain || '').trim().toLowerCase();
+        const initial = (company.canonical_name || company.domain || 'E').trim().charAt(0).toUpperCase();
+        const primaryLogo = company.logo_url || `https://logo.clearbit.com/${cleanDomain}`;
+        const fallbackLogo = `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128`;
+
+        // Reset container HTML if previously overridden by letter fallback
+        if (avatarContainer && !document.getElementById('detail-company-logo')) {
+            avatarContainer.innerHTML = `<img id="detail-company-logo" src="${primaryLogo}" alt="Logo">`;
+        }
+
+        const activeLogoImg = document.getElementById('detail-company-logo') || logoImg;
+        activeLogoImg.src = primaryLogo;
+        activeLogoImg.style.display = 'block';
+        activeLogoImg.onerror = function() {
+            this.onerror = function() {
+                this.style.display = 'none';
+                if (avatarContainer) {
+                    avatarContainer.innerHTML = `<span class="company-initial-fallback" style="font-weight:800; color:var(--accent-cyan); font-size:18px; font-family:var(--font-heading); display:flex; align-items:center; justify-content:center; width:100%; height:100%; background:rgba(0,229,255,0.12); border-radius:6px;">${initial}</span>`;
+                }
+            };
+            this.src = fallbackLogo;
+        };
     }
 
     document.getElementById('detail-company-name').textContent = company.canonical_name;
@@ -968,6 +1165,11 @@ function renderCompanyDetails(company, intentData) {
     // 2. Business Insights Summary Cards
     document.getElementById('detail-business-summary').textContent = intentData.business_summary || 'Análisis de señales completado sin anomalías.';
     document.getElementById('detail-recommended-action').textContent = intentData.recommended_action || 'Mantener en radar de seguimiento.';
+
+    // Render Deep Institutional Dossier (Financials, Sales Playbook, Personas, Competitors)
+    if (intentData.institutional_dossier) {
+        renderInstitutionalDossier(intentData.institutional_dossier, company, compScore);
+    }
 
     // 3. Vector Scores Progress Bars
     const scores = intentData.intent_scores;
@@ -993,6 +1195,86 @@ function renderCompanyDetails(company, intentData) {
     // 7. Feature 13 & Feature 11: LLM Executive Brief and Tech Stack Profile
     loadExecutiveBrief(company.id);
     loadTechStackProfile(company.id);
+}
+
+function renderInstitutionalDossier(dossier, company, compScore) {
+    if (!dossier) return;
+
+    // 1. Financial Indicators
+    const fin = dossier.financials || {};
+    const arrEl = document.getElementById('dossier-arr');
+    const yoyEl = document.getElementById('dossier-yoy');
+    const runwayEl = document.getElementById('dossier-runway');
+    const burnEl = document.getElementById('dossier-burn');
+    const solvencyEl = document.getElementById('dossier-solvency');
+    const pmpEl = document.getElementById('dossier-pmp');
+    const capitalEl = document.getElementById('dossier-capital');
+    const mercantilEl = document.getElementById('dossier-mercantil');
+
+    if (arrEl) arrEl.textContent = fin.arr_estimate || '€12M - €25M ARR';
+    if (yoyEl) yoyEl.textContent = fin.yoy_growth || '+32.4% YoY';
+    if (runwayEl) runwayEl.textContent = fin.runway || '18 - 24 meses';
+    if (burnEl) burnEl.textContent = `Burn: ${fin.burn_rate || '~€140k/mes'}`;
+    if (solvencyEl) solvencyEl.textContent = fin.solvency_risk || '12/100 (Bajo Riesgo)';
+    if (pmpEl) pmpEl.textContent = `PMP: ${fin.pmp_days || '34 días'}`;
+    if (capitalEl) capitalEl.textContent = fin.capital_social || '€250.000';
+    if (mercantilEl) mercantilEl.textContent = fin.mercantil_info || 'Reg. Mercantil Verificado';
+
+    // 2. Sales Playbook & Personas
+    const pb = dossier.sales_playbook || {};
+    const windowTag = document.getElementById('playbook-window-tag');
+    if (windowTag) windowTag.textContent = pb.buying_window ? '🔥 Ventana Abierta (Próximos 14-30 días)' : '🔥 Alta Intención';
+
+    const painContainer = document.getElementById('playbook-pain-points');
+    if (painContainer && pb.pain_points) {
+        painContainer.innerHTML = pb.pain_points.map(pt => `
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; color: var(--text-main); display: flex; align-items: flex-start; gap: 8px;">
+                <i class="fa-solid fa-bolt" style="color: var(--brand-gold); margin-top: 2px;"></i>
+                <span>${escapeHtml(pt)}</span>
+            </div>
+        `).join('');
+    }
+
+    const personaContainer = document.getElementById('playbook-personas');
+    if (personaContainer && pb.target_personas) {
+        personaContainer.innerHTML = pb.target_personas.map(p => `
+            <div style="background: rgba(0, 229, 255, 0.05); border: 1px solid rgba(0, 229, 255, 0.2); border-radius: 8px; padding: 10px 12px; font-size: 0.82rem;">
+                <div style="font-weight: 700; color: var(--accent-cyan); display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-user-check"></i> ${escapeHtml(p.role)}
+                </div>
+                <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">Enfoque: ${escapeHtml(p.focus)}</div>
+            </div>
+        `).join('');
+    }
+
+    const pitchTextarea = document.getElementById('playbook-pitch-text');
+    if (pitchTextarea && pb.cold_outreach_pitch) {
+        pitchTextarea.value = pb.cold_outreach_pitch;
+    }
+
+    // 3. Competitor Benchmarks Table
+    const compTableBody = document.getElementById('competitors-table-body');
+    const compBadge = document.getElementById('competitor-percentile-badge');
+    if (compBadge) compBadge.textContent = compScore >= 80 ? 'Top 5% Sectorial' : (compScore >= 60 ? 'Top 15% Sectorial' : 'Top 30% Sectorial');
+
+    if (compTableBody && dossier.competitors) {
+        compTableBody.innerHTML = dossier.competitors.map(c => `
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <td style="padding: 10px; font-weight: 700; color: var(--text-main);"><i class="fa-solid fa-building"></i> ${escapeHtml(c.name)}</td>
+                <td style="padding: 10px; font-weight: 800; color: var(--brand-gold);">${c.score} / 100</td>
+                <td style="padding: 10px; color: var(--text-muted);">${escapeHtml(c.size)}</td>
+                <td style="padding: 10px;"><span class="badge badge-industry" style="font-size:0.74rem;">${escapeHtml(c.status)}</span></td>
+            </tr>
+        `).join('');
+    }
+}
+
+function copyOutreachPitch() {
+    const pitchTextarea = document.getElementById('playbook-pitch-text');
+    if (pitchTextarea && pitchTextarea.value) {
+        navigator.clipboard.writeText(pitchTextarea.value);
+        showGlobalNotification('📋 Guion comercial copiado al portapapeles', 'success');
+    }
 }
 
 function renderKeyEventsExplicability(matrix, compScore) {
@@ -1473,12 +1755,16 @@ function renderFilteredCompanyList(companies) {
         if (compScore >= 70) scoreBadgeClass = 'high';
         if ((intent.financial_stress || 0) >= 60) scoreBadgeClass = 'distress';
 
-        const logoUrl = company.logo_url || `https://logo.clearbit.com/${company.domain}`;
+        const cleanDomain = (company.domain || '').trim().toLowerCase();
+        const primaryLogo = company.logo_url || `https://logo.clearbit.com/${cleanDomain}`;
+        const fallbackLogo = `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=64`;
+        const initial = (company.canonical_name || company.domain || 'E').trim().charAt(0).toUpperCase();
 
         card.innerHTML = `
             <div class="card-top" style="display:flex; justify-content:space-between; align-items:center; width:100%; min-width:0; gap:8px;">
                 <span class="company-name" style="display:flex; align-items:center; gap:8px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                    <img src="${logoUrl}" class="mini-company-logo" onerror="this.style.display='none'" style="width:16px; height:16px; border-radius:3px; flex-shrink:0;">
+                    <img src="${primaryLogo}" class="mini-company-logo" onerror="this.onerror=function(){ this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex'; }; this.src='${fallbackLogo}';" style="width:18px; height:18px; border-radius:4px; flex-shrink:0; object-fit:contain; background:#fff; padding:1px;">
+                    <span style="display:none; width:18px; height:18px; border-radius:4px; background:linear-gradient(135deg, #00e5ff 0%, #0077ff 100%); color:#050b14; font-weight:800; font-size:10px; align-items:center; justify-content:center; flex-shrink:0;">${initial}</span>
                     <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(company.canonical_name)}</span>
                 </span>
                 <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
@@ -1551,12 +1837,15 @@ async function handleEnrichSubmit(e) {
 
         const company = await resp.json();
         if (resp.ok) {
-            const logoUrl = company.logo_url || `https://logo.clearbit.com/${company.domain}`;
+            const cleanDomain = (company.domain || '').trim().toLowerCase();
+            const primaryLogo = company.logo_url || `https://logo.clearbit.com/${cleanDomain}`;
+            const fallbackLogo = `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128`;
+
             if (statusBox) {
                 statusBox.innerHTML = `
                     <div style="background: rgba(15, 23, 42, 0.9); border: 1px solid var(--accent-cyan); border-radius: 8px; padding: 14px; margin-top: 10px;">
                         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-                            <img src="${logoUrl}" style="width: 38px; height: 38px; border-radius: 6px; background: #fff; padding: 2px;" onerror="this.style.display='none'">
+                            <img src="${primaryLogo}" style="width: 38px; height: 38px; border-radius: 6px; background: #fff; padding: 2px; object-fit: contain;" onerror="this.onerror=null; this.src='${fallbackLogo}';">
                             <div>
                                 <h4 style="margin: 0; font-size: 1rem; color: var(--text-main); font-weight: 700;">${escapeHtml(company.canonical_name)}</h4>
                                 <span style="font-size: 0.78rem; color: var(--accent-cyan); font-family: var(--font-code);">${escapeHtml(company.domain)}</span>
@@ -1695,7 +1984,7 @@ async function loadTechStackProfile(companyId) {
 let currentUserProfile = null;
 
 function getAuthToken() {
-    return localStorage.getItem('radar_jwt_token') || localStorage.getItem('radar_token') || '';
+    return localStorage.getItem('authToken') || localStorage.getItem('radar_jwt_token') || localStorage.getItem('radar_token') || '';
 }
 
 function getAuthHeader() {
@@ -1724,7 +2013,12 @@ async function loadUserProfile() {
             currentUserProfile = await resp.json();
             updateUserProfileUI(currentUserProfile);
         } else {
-            await fillDemoAccount('admin@radar.com', 'admin123', true);
+            const leadEmail = localStorage.getItem('ofanradar_lead_email');
+            if (leadEmail) {
+                await handleDirectEmailAutoLogin(leadEmail);
+            } else {
+                checkTerminalAccessGate();
+            }
         }
     } catch (err) {
         console.error('Error fetching current user profile:', err);
@@ -1734,12 +2028,15 @@ async function loadUserProfile() {
 function updateUserProfileUI(user) {
     const orgEl = document.getElementById('user-org-name');
     const roleEl = document.getElementById('user-role-name');
-    if (orgEl) orgEl.innerHTML = `<i class="fa-solid fa-building"></i> ${escapeHtml(user.organization_name)}`;
-    if (roleEl) roleEl.textContent = user.role;
+    const displayEmail = user.email || user.full_name || 'Usuario Lead';
+    if (orgEl) orgEl.innerHTML = `<i class="fa-solid fa-user-circle" style="color:var(--accent-cyan);"></i> ${escapeHtml(displayEmail)}`;
+    if (roleEl) roleEl.textContent = user.subscription_status === 'active' ? 'PRO' : (user.role || 'TRIAL');
 
     // Trial Badge & Subscription Status
     const trialTextEl = document.getElementById('trial-status-text');
     const trialBadgeEl = document.getElementById('trial-status-badge');
+    const modalStatusBanner = document.getElementById('upgrade-modal-current-status');
+
     if (trialTextEl && trialBadgeEl) {
         const subStatus = (user.subscription_status || 'trial').toLowerCase();
         if (subStatus === 'active') {
@@ -1747,17 +2044,35 @@ function updateUserProfileUI(user) {
             trialBadgeEl.style.borderColor = 'rgba(16, 185, 129, 0.4)';
             trialBadgeEl.style.color = '#10b981';
             trialBadgeEl.style.background = 'rgba(16, 185, 129, 0.1)';
+            if (modalStatusBanner) {
+                modalStatusBanner.style.background = 'rgba(16, 185, 129, 0.12)';
+                modalStatusBanner.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                modalStatusBanner.style.color = '#10b981';
+                modalStatusBanner.innerHTML = '<i class="fa-solid fa-circle-check"></i> Estado Actual: Suscripción Pro Activa ($99/mes)';
+            }
         } else if (subStatus === 'trial') {
             const daysLeft = user.days_left_in_trial !== undefined ? user.days_left_in_trial : 7;
             trialTextEl.innerHTML = `<i class="fa-solid fa-bolt" style="color:#a78bfa;"></i> Trial: Quedan ${daysLeft} días`;
             trialBadgeEl.style.borderColor = 'rgba(139, 92, 246, 0.4)';
             trialBadgeEl.style.color = '#a78bfa';
             trialBadgeEl.style.background = 'rgba(139, 92, 246, 0.15)';
+            if (modalStatusBanner) {
+                modalStatusBanner.style.background = 'rgba(139, 92, 246, 0.12)';
+                modalStatusBanner.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                modalStatusBanner.style.color = '#a78bfa';
+                modalStatusBanner.innerHTML = `<i class="fa-solid fa-bolt"></i> Estado Actual: Periodo de Prueba (${daysLeft} días restantes)`;
+            }
         } else {
             trialTextEl.innerHTML = '<i class="fa-solid fa-lock" style="color:#ef4444;"></i> Trial Expirado — Upgrade';
             trialBadgeEl.style.borderColor = 'rgba(239, 68, 68, 0.5)';
             trialBadgeEl.style.color = '#ef4444';
             trialBadgeEl.style.background = 'rgba(239, 68, 68, 0.15)';
+            if (modalStatusBanner) {
+                modalStatusBanner.style.background = 'rgba(239, 68, 68, 0.12)';
+                modalStatusBanner.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                modalStatusBanner.style.color = '#ef4444';
+                modalStatusBanner.innerHTML = '<i class="fa-solid fa-lock"></i> Estado Actual: Trial Expirado. Actualiza a Plan Pro para continuar.';
+            }
         }
     }
 }

@@ -563,6 +563,17 @@ def get_company_intent_breakdown(
         composite_score=composite
     )
 
+    from app.enrichment import CompanyEnrichmentEngine
+    dossier = CompanyEnrichmentEngine.generate_institutional_dossier(
+        company_id=company.id,
+        canonical_name=company.canonical_name,
+        domain=company.domain,
+        industry=company.industry,
+        employee_range=company.employee_range,
+        hq_city=company.hq_city,
+        intent_score=composite
+    ) if has_sub else None
+
     return IntentSnapshotResponse(
         snapshot_id=f"snap_{company.id[:8]}",
         company_id=company.id,
@@ -576,6 +587,7 @@ def get_company_intent_breakdown(
         confidence_score=0.92,
         signal_count=len(signals),
         attribution_matrix=attribution,
+        institutional_dossier=dossier,
         computed_at=datetime.datetime.utcnow()
     )
 

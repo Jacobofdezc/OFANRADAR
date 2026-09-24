@@ -338,6 +338,102 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Institutional Financial & Operational Dossier Block -->
+                        <div class="card financial-dossier-card margin-top" style="border-left: 4px solid var(--accent-cyan);">
+                            <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 16px;">
+                                <h3><i class="fa-solid fa-chart-line" style="color:var(--accent-cyan);"></i> Indicadores Económicos & Análisis de Solvencia</h3>
+                                <span class="badge badge-industry">Dossier Financiero Institucional</span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;">
+                                    <div style="font-size: 0.74rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;"><i class="fa-solid fa-sack-dollar"></i> Facturación Estimada (ARR)</div>
+                                    <div id="dossier-arr" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-top: 4px;">-</div>
+                                    <div id="dossier-yoy" style="font-size: 0.78rem; color: var(--accent-green); font-weight: 700; margin-top: 2px;">-</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;">
+                                    <div style="font-size: 0.74rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;"><i class="fa-solid fa-fire-flame-curved"></i> Cash Burn & Runway</div>
+                                    <div id="dossier-runway" style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-top: 4px;">-</div>
+                                    <div id="dossier-burn" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">-</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;">
+                                    <div style="font-size: 0.74rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;"><i class="fa-solid fa-shield-halved"></i> Riesgo Solvencia / PMP</div>
+                                    <div id="dossier-solvency" style="font-size: 1.1rem; font-weight: 800; color: #10b981; margin-top: 4px;">-</div>
+                                    <div id="dossier-pmp" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">-</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;">
+                                    <div style="font-size: 0.74rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;"><i class="fa-solid fa-building-columns"></i> Capital Social & Registro</div>
+                                    <div id="dossier-capital" style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-top: 4px;">-</div>
+                                    <div id="dossier-mercantil" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">-</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Sales Playbook & Persona Target Card -->
+                        <div class="card sales-playbook-card margin-top" style="border-left: 4px solid var(--brand-gold);">
+                            <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 16px;">
+                                <h3><i class="fa-solid fa-bullseye" style="color:var(--brand-gold);"></i> AI Sales Playbook & Matriz de Prospección B2B</h3>
+                                <span class="badge badge-intent" id="playbook-window-tag">🔥 Ventana Abierta</span>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                                <!-- Left: Pain Points & Persona Target -->
+                                <div>
+                                    <h4 style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-triangle-exclamation" style="color:var(--accent-amber);"></i> Puntos de Dolor Identificados (Pain Points)
+                                    </h4>
+                                    <div id="playbook-pain-points" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;">
+                                        <!-- Injected dynamically -->
+                                    </div>
+
+                                    <h4 style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-users-gear" style="color:var(--accent-cyan);"></i> Cargos Objetivo para Contactar (Buyer Personas)
+                                    </h4>
+                                    <div id="playbook-personas" style="display: flex; flex-direction: column; gap: 8px;">
+                                        <!-- Injected dynamically -->
+                                    </div>
+                                </div>
+
+                                <!-- Right: Tailored Cold Outreach Script -->
+                                <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                            <span style="font-size: 0.84rem; font-weight: 700; color: var(--brand-gold);"><i class="fa-solid fa-envelope-open-text"></i> Guion de Contacto Directo (Cold Outreach Pitch)</span>
+                                            <button class="btn btn-outline btn-sm" onclick="copyOutreachPitch()" style="padding: 4px 10px; font-size: 0.76rem;"><i class="fa-solid fa-copy"></i> Copiar</button>
+                                        </div>
+                                        <textarea id="playbook-pitch-text" style="width: 100%; height: 160px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); font-family: var(--font-code); font-size: 0.82rem; padding: 12px; line-height: 1.5; resize: none;" readonly></textarea>
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px;">
+                                        <i class="fa-solid fa-circle-info"></i> Generado dinámicamente según las señales de intención en vivo.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Competitive Benchmarking Card -->
+                        <div class="card competitors-card margin-top">
+                            <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 14px;">
+                                <h3><i class="fa-solid fa-ranking-star" style="color:var(--accent-cyan);"></i> Benchmarking Competitivo y Posicionamiento de Sector</h3>
+                                <span class="badge badge-industry" id="competitor-percentile-badge">Top Percentil Sectorial</span>
+                            </div>
+                            <p class="sub-header-text" style="margin-bottom: 12px;">Comparativa cuantitativa de intención de compra y plantilla frente a competidores directos en la misma vertical.</p>
+
+                            <div style="overflow-x: auto;">
+                                <table class="custom-table" style="width: 100%; font-size: 0.85rem; text-align: left; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+                                            <th style="padding: 10px;">Empresa / Competidor</th>
+                                            <th style="padding: 10px;">Puntuación Intención</th>
+                                            <th style="padding: 10px;">Plantilla Estimada</th>
+                                            <th style="padding: 10px;">Estado de Actividad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="competitors-table-body">
+                                        <!-- Injected dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- TAB 2: SEÑALES & JUSTIFICACIÓN -->
@@ -855,51 +951,105 @@
         </div>
     </div>
 
-    <!-- Bloque 10: Modal Upgrade a Premium -->
+    <!-- Bloque 10: Modal Upgrade a Premium / 7 Días Trial / Stripe -->
     <div class="modal-backdrop" id="upgrade-modal">
-        <div class="modal-box" style="max-width: 480px; text-align: center;">
+        <div class="modal-box" style="max-width: 580px; text-align: center;">
             <div class="modal-header">
-                <h2><i class="fa-solid fa-crown" style="color: var(--brand-gold);"></i> Desbloquear Plan Pro Terminal</h2>
+                <h2><i class="fa-solid fa-crown" style="color: var(--brand-gold);"></i> Planes & Suscripción OFANRADAR</h2>
                 <button class="modal-close" onclick="closeUpgradeModal()">&times;</button>
             </div>
             <div class="modal-body" style="padding-top: 10px;">
-                <p class="sub-header-text" style="margin-bottom: 20px;">
-                    Tu prueba gratuita de 7 días ha finalizado o requiere suscripción activa para acceder a Intent Scores ilimitados, resúmenes IA y exportación CSV.
+                <p class="sub-header-text" style="margin-bottom: 16px;">
+                    Accede al radar de intenciones 360°, resúmenes ejecutivos IA, alertas de cambios en la web y exportación ilimitada.
                 </p>
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-                    <div style="font-size: 1.8rem; font-weight: 800; color: white;">$99 <span style="font-size: 0.9rem; color: var(--text-muted);">/mes</span></div>
-                    <div style="font-size: 0.85rem; color: #10b981; margin-top: 4px; font-weight: 600;">Plan Pro Terminal & AI Intelligence</div>
+
+                <!-- Status Banner inside modal -->
+                <div id="upgrade-modal-current-status" style="background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 10px; padding: 12px; margin-bottom: 20px; font-size: 0.88rem; color: #a78bfa; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fa-solid fa-bolt"></i> Estado Actual: Periodo de Prueba (7 días incluidos)
                 </div>
-                <button class="btn btn-primary btn-full" style="padding: 14px; font-size: 1rem; font-weight: 700; background: var(--brand-gold); color: #ffffff;" onclick="handleUpgradeCheckout()">
-                    <i class="fa-solid fa-credit-card"></i> Actualizar a Premium ($99/mes)
-                </button>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; text-align: left;">
+                    <!-- Option 1: 7 Días Trial -->
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div style="font-weight: 800; color: var(--text-main); font-size: 1.05rem;">Prueba 7 Días</div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Acceso sin compromiso para evaluar empresas.</div>
+                            <div style="font-size: 1.6rem; font-weight: 800; color: white; margin: 12px 0 6px 0;">$0 <span style="font-size: 0.8rem; color: var(--text-muted);">/ 7 días</span></div>
+                            <ul style="padding-left: 16px; margin: 10px 0; font-size: 0.78rem; color: var(--text-muted); line-height: 1.6;">
+                                <li>Directorio de empresas</li>
+                                <li>Ficha 360° básica</li>
+                                <li>Sin tarjeta requerida</li>
+                            </ul>
+                        </div>
+                        <button class="btn btn-outline btn-full" style="padding: 10px; font-size: 0.85rem; font-weight: 700;" onclick="activateOrExtendTrial()">
+                            <i class="fa-solid fa-rotate"></i> Activar / Extender Trial
+                        </button>
+                    </div>
+
+                    <!-- Option 2: Pro Plan (Stripe) -->
+                    <div style="background: rgba(225, 29, 72, 0.08); border: 2px solid var(--brand-gold); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+                        <div style="position: absolute; top: -10px; right: 14px; background: var(--brand-gold); color: #fff; font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 10px; text-transform: uppercase;">
+                            RECOMENDADO
+                        </div>
+                        <div>
+                            <div style="font-weight: 800; color: var(--text-main); font-size: 1.05rem;">Plan Pro Terminal</div>
+                            <div style="font-size: 0.78rem; color: #10b981; margin-top: 4px; font-weight: 600;">Inteligencia B2B Ilimitada</div>
+                            <div style="font-size: 1.6rem; font-weight: 800; color: white; margin: 12px 0 6px 0;">$99 <span style="font-size: 0.8rem; color: var(--text-muted);">/ mes</span></div>
+                            <ul style="padding-left: 16px; margin: 10px 0; font-size: 0.78rem; color: var(--text-main); line-height: 1.6;">
+                                <li><strong style="color:var(--accent-green);">✓</strong> Executive Brief IA (LLM)</li>
+                                <li><strong style="color:var(--accent-green);">✓</strong> DOM Diffing & Cambios Web</li>
+                                <li><strong style="color:var(--accent-green);">✓</strong> Exportación CSV Ilimitada</li>
+                                <li><strong style="color:var(--accent-green);">✓</strong> Webhooks HMAC & Alertas</li>
+                            </ul>
+                        </div>
+                        <button class="btn btn-primary btn-full" style="padding: 11px; font-size: 0.9rem; font-weight: 800; background: var(--brand-gold); color: #ffffff;" onclick="handleUpgradeCheckout('pro')">
+                            <i class="fa-solid fa-credit-card"></i> Pagar con Stripe ($99)
+                        </button>
+                    </div>
+                </div>
+
+                <div style="font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <span><i class="fa-solid fa-shield-halved" style="color: var(--accent-green);"></i> Pago seguro mediante Stripe SSL</span>
+                    <a href="javascript:void(0)" onclick="handleUpgradeCheckout('annual')" style="color: var(--accent-cyan); font-weight: 600; text-decoration: none;">Ver Plan Anual ($79/mes) &rarr;</a>
+                </div>
             </div>
+        </div>
+    </div>
+
     <!-- Lead Access / Email Gate Modal -->
-    <div class="modal-backdrop" id="lead-email-gate-modal" style="display: none; z-index: 100000; backdrop-filter: blur(12px); background: rgba(5, 11, 20, 0.88);">
-        <div class="modal-box" style="max-width: 480px; text-align: center; border: 1px solid var(--accent-cyan); box-shadow: 0 0 30px rgba(0, 229, 255, 0.2);">
-            <div class="modal-header" style="justify-content: center;">
-                <h2><i class="fa-solid fa-terminal" style="color: var(--accent-cyan);"></i> Acceso a la Terminal OFANRADAR</h2>
+    <div class="modal-backdrop" id="lead-email-gate-modal" style="display: none; z-index: 100000; backdrop-filter: blur(16px); background: rgba(5, 11, 20, 0.92);">
+        <div class="modal-box" style="max-width: 500px; text-align: center; border: 1px solid rgba(0, 229, 255, 0.4); box-shadow: 0 0 40px rgba(0, 229, 255, 0.25); background: var(--bg-card);">
+            <div class="modal-header" style="justify-content: center; border-bottom: 1px solid var(--border-color); padding-bottom: 14px;">
+                <h2 style="font-family: var(--font-heading); font-size: 1.35rem; color: var(--text-main); font-weight: 800;">
+                    <i class="fa-solid fa-bolt" style="color: var(--accent-cyan);"></i> Acceso a la Terminal OFANRADAR
+                </h2>
             </div>
-            <div class="modal-body" style="padding-top: 10px;">
-                <p class="sub-header-text" style="margin-bottom: 20px;">
-                    Introduce tu correo electrónico profesional para iniciar tu periodo de prueba y acceder a la Terminal de Inteligencia Operativa.
+            <div class="modal-body" style="padding-top: 18px;">
+                <div style="width: 54px; height: 54px; border-radius: 50%; background: rgba(0, 229, 255, 0.1); border: 1px solid rgba(0, 229, 255, 0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: var(--accent-cyan); font-size: 1.5rem;">
+                    <i class="fa-solid fa-user-lock"></i>
+                </div>
+                <p class="sub-header-text" style="margin-bottom: 22px; font-size: 0.92rem; color: var(--text-muted); line-height: 1.55;">
+                    Introduce tu correo electrónico profesional para activar tus <strong style="color: var(--text-main);">7 Días de Prueba Gratuita</strong> y acceder al informe 360° completo de la empresa.
                 </p>
                 <form id="lead-email-form" onsubmit="handleLeadAccessSubmit(event)">
-                    <div style="margin-bottom: 16px; text-align: left;">
-                        <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 6px;">Correo Electrónico Profesional</label>
-                        <input type="email" id="lead-access-email-input" class="custom-select" style="width: 100%; padding: 12px; font-size: 0.95rem;" placeholder="ejemplo@empresa.com" required>
+                    <div style="margin-bottom: 18px; text-align: left;">
+                        <label style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 6px;">Correo Electrónico Profesional</label>
+                        <div style="position: relative;">
+                            <i class="fa-solid fa-envelope" style="position: absolute; left: 14px; top: 14px; color: var(--text-muted);"></i>
+                            <input type="email" id="lead-access-email-input" class="custom-select" style="width: 100%; padding: 12px 14px 12px 40px; font-size: 0.95rem; border-radius: 8px; border: 1px solid var(--border-color);" placeholder="nombre@tuempresa.com" required>
+                        </div>
                     </div>
                     <div id="lead-access-error-msg" style="color: var(--accent-red); font-size: 0.85rem; margin-bottom: 14px; display: none; background: rgba(225, 29, 72, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(225, 29, 72, 0.3);"></div>
-                    <button type="submit" class="btn btn-primary btn-full" id="lead-access-submit-btn" style="padding: 14px; font-size: 1rem; font-weight: 700; background: linear-gradient(135deg, #00e5ff 0%, #0077ff 100%); color: #050b14;">
-                        <i class="fa-solid fa-bolt"></i> Acceder a la Terminal
+                    <button type="submit" class="btn btn-primary btn-full" id="lead-access-submit-btn" style="padding: 14px; font-size: 1rem; font-weight: 800; background: linear-gradient(135deg, #00e5ff 0%, #0077ff 100%); color: #050b14; border-radius: 8px; border: none; box-shadow: 0 4px 20px rgba(0, 229, 255, 0.35);">
+                        <i class="fa-solid fa-bolt"></i> Activar 7 Días Gratis y Entrar
                     </button>
                 </form>
-                <div id="lead-access-pro-upgrade-box" style="display: none; margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
-                    <p style="font-size: 0.85rem; color: var(--accent-amber); margin-bottom: 12px;">¿Ya tienes cuenta o deseas acceso ilimitado a Plan Pro?</p>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-outline" style="flex: 1;" onclick="closeLeadModalOpenAuth()"><i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión</button>
-                        <button class="btn btn-primary" style="flex: 1; background: var(--brand-gold); color: #fff;" onclick="closeLeadModalOpenUpgrade()"><i class="fa-solid fa-crown"></i> Plan Pro</button>
-                    </div>
+
+                <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                    <span style="color: var(--text-muted);">¿Ya estás registrado?</span>
+                    <button class="btn btn-outline" style="padding: 6px 14px; font-size: 0.82rem;" onclick="closeLeadModalOpenAuth()">
+                        <i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión
+                    </button>
                 </div>
             </div>
         </div>

@@ -102,7 +102,7 @@
                 <i class="fa-solid fa-sun" id="theme-icon"></i>
             </button>
 
-            <a href="/app" class="btn btn-primary" style="background: var(--text-main); color: var(--bg-dark); padding: 10px 20px; font-weight: 800; border-radius: 8px; text-decoration: none;">
+            <a href="/app?company={{COMPANY_DOMAIN}}" class="btn btn-primary" style="background: var(--text-main); color: var(--bg-dark); padding: 10px 20px; font-weight: 800; border-radius: 8px; text-decoration: none;">
                 <i class="fa-solid fa-terminal"></i> Abrir Terminal
             </a>
         </div>
@@ -144,7 +144,7 @@
                     </div>
 
                     <div class="viga-hero-actions">
-                        <a href="/app" class="btn btn-primary" style="background: var(--text-main); color: var(--bg-dark); padding: 14px 28px; font-weight:800; font-size: 1rem; border-radius: 8px; text-decoration: none;">
+                        <a href="/app?company={{COMPANY_DOMAIN}}" class="btn btn-primary" style="background: var(--text-main); color: var(--bg-dark); padding: 14px 28px; font-weight:800; font-size: 1rem; border-radius: 8px; text-decoration: none;">
                             <i class="fa-solid fa-bolt"></i> Ver Informe Completo en la Terminal
                         </a>
                         <a href="/precios" class="btn btn-outline" style="padding: 14px 24px; font-size: 0.95rem; border-radius: 8px; text-decoration: none;">
@@ -263,10 +263,10 @@
                                 Accede al historial completo de eventos de contratación, actas del BORME, migraciones tecnológicas y la síntesis ejecutiva por Agente IA.
                             </p>
                             <div style="display: flex; flex-direction: column; gap: 10px;">
-                                <a href="/app?auth=register" class="btn btn-primary" style="padding: 14px 22px; font-weight: 800; font-size: 0.95rem; background: linear-gradient(135deg, #be123c 0%, #e11d48 100%); color: #ffffff; text-decoration: none; border-radius: 8px; border: none; box-shadow: 0 4px 18px rgba(225, 29, 72, 0.4); display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                                <a href="/app?company={{COMPANY_DOMAIN}}&auth=register" class="btn btn-primary" style="padding: 14px 22px; font-weight: 800; font-size: 0.95rem; background: linear-gradient(135deg, #be123c 0%, #e11d48 100%); color: #ffffff; text-decoration: none; border-radius: 8px; border: none; box-shadow: 0 4px 18px rgba(225, 29, 72, 0.4); display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
                                     <i class="fa-solid fa-bolt"></i> Registrarse Gratis en la Terminal
                                 </a>
-                                <a href="/app" class="btn btn-outline" style="padding: 11px; font-weight: 600; font-size: 0.88rem; text-decoration: none; border-radius: 8px;">
+                                <a href="/app?company={{COMPANY_DOMAIN}}" class="btn btn-outline" style="padding: 11px; font-weight: 600; font-size: 0.88rem; text-decoration: none; border-radius: 8px;">
                                     <i class="fa-solid fa-right-to-bracket"></i> Ya tengo cuenta — Iniciar Sesión
                                 </a>
                             </div>
@@ -285,7 +285,7 @@
                 </div>
                 <div style="display: flex; gap: 20px;">
                     <a href="/pricing" style="color: var(--text-muted); text-decoration: none;">Precios</a>
-                    <a href="/app" style="color: var(--text-muted); text-decoration: none;">Terminal</a>
+                    <a href="/app?company={{COMPANY_DOMAIN}}" style="color: var(--text-muted); text-decoration: none;">Terminal</a>
                     <a href="/empresa/{{COMPANY_DOMAIN}}" style="color: var(--accent-cyan); text-decoration: none;">Perfil {{COMPANY_NAME}}</a>
                 </div>
             </div>
