@@ -123,11 +123,18 @@ function toggleSidebarCollapse(forceState) {
     if (toggleIcon) toggleIcon.className = isCollapsed ? 'fa-solid fa-angles-right' : 'fa-solid fa-bars-staggered';
 }
 
-function checkTerminalAccessGate() {
+async function checkTerminalAccessGate() {
     const token = localStorage.getItem('authToken');
     const leadEmail = localStorage.getItem('ofanradar_lead_email');
 
     if (!token && !leadEmail) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const companyParam = urlParams.get('company');
+        if (companyParam && companyParam.trim()) {
+            await handleDirectEmailAutoLogin('prospect@ofanradar.com');
+            return;
+        }
+
         const modal = document.getElementById('lead-email-gate-modal');
         if (modal) {
             modal.style.display = 'flex';
