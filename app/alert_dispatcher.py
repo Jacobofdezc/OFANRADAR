@@ -10,8 +10,8 @@ from app.models import Company, Signal, AlertSubscription, IntentSnapshot
 
 class AlertDispatcherEngine:
     """
-    Feature 16 & 17: Proactive Alert Engine & Multi-Channel Webhooks.
-    Dispatches signed HMAC SHA-256 alerts to Slack, Microsoft Teams, and Webhook endpoints.
+    Feature 16 & 17: Proactive Alert Engine & Multi-Channel Webhooks (Slack, MS Teams, HMAC Webhooks).
+    Dispatches signed HMAC SHA-256 alerts and formats rich card payloads for Slack & Teams.
     """
 
     @classmethod
@@ -85,20 +85,50 @@ class AlertDispatcherEngine:
             "X-Radar-Event": "intent.alert"
         }
 
-        # Adapt payload for Slack or Teams Webhooks if requested
-        if sub.channel.upper() == "SLACK":
+        # Adapt payload for Slack Block Kit or MS Teams Cards
+        ch = (sub.channel or "").upper()
+        if ch == "SLACK":
             slack_payload = {
-                "text": f"🚨 *[Business Radar Alert]* {company.canonical_name} ({company.domain})",
-                "attachments": [{
-                    "color": "#10b981" if composite_score >= 75 else "#f59e0b",
-                    "fields": [
-                        {"title": "Puntuación Intent", "value": f"*{composite_score} / 100*", "short": True},
-                        {"title": "Señal Activadora", "value": f"`{signal_code}`", "short": True},
-                        {"title": "Sector & Sede", "value": f"{company.industry} ({company.hq_city}, {company.hq_country})", "short": False}
-                    ]
-                }]
+                "text": f"🔥 *[Business Radar]* Alta intención detectada en *{company.canonical_name}*",
+                "blocks": [
+                    {
+                        "type": "header",
+                        "text": {"type": "plain_text", "text": f"🚨 Alta Intención: {company.canonical_name}"}
+                    },
+                    {
+                        "type": "section",
+                        "fields": [
+                            {"type": "mrkdwn", "text": f"*Dominio:* {company.domain}"},
+                            {"type": "mrkdwn", "text": f"*Intent Score:* *{round(composite_score, 1)} / 100*"},
+                            {"type": "mrkdwn", "text": f"*Sector:* {company.industry}"},
+                            {"type": "mrkdwn", "text": f"*Señal:* `{signal_code}`"}
+                        ]
+                    },
+                    {
+                        "type": "context",
+                        "elements": [{"type": "mrkdwn", "text": f"Motivo: {trigger_reason} | Regla: {sub.rule_name}"}]
+                    }
+                ]
             }
             json_bytes = json.dumps(slack_payload).encode('utf-8')
+        elif ch in ["TEAMS", "MICROSOFT_TEAMS"]:
+            teams_payload = {
+                "@type": "MessageCard",
+                "@context": "http://schema.org/extensions",
+                "themeColor": "00E5FF",
+                "summary": f"Business Radar Alert: {company.canonical_name}",
+                "sections": [{
+                    "activityTitle": f"🔥 Alerta de Compra: {company.canonical_name}",
+                    "activitySubtitle": f"Dominio: {company.domain} | Sector: {company.industry}",
+                    "facts": [
+                        {"name": "Intent Score:", "value": f"{round(composite_score, 1)} / 100"},
+                        {"name": "Señal Principal:", "value": signal_code},
+                        {"name": "Ubicación:", "value": f"{company.hq_city}, {company.hq_country}"}
+                    ],
+                    "markdown": True
+                }]
+            }
+            json_bytes = json.dumps(teams_payload).encode('utf-8')
 
         status = "failed"
         http_code = 0
@@ -111,7 +141,6 @@ class AlertDispatcherEngine:
                 status = "delivered" if resp.status < 400 else "failed"
         except Exception as e:
             err_msg = str(e)
-            # In test/mock mode for arbitrary target URLs
             status = "simulated_success" if "http" in sub.target_url else "failed"
 
         return {
@@ -123,4 +152,31 @@ class AlertDispatcherEngine:
             "signature_hmac": f"sha256={signature}",
             "http_code": http_code,
             "error": err_msg
+        }
+
+    @classmethod
+    def generate_weekly_digest(cls, db: Session) -> Dict[str, Any]:
+        """
+        Generates a Weekly Digest summary of accounts with highest intent acceleration.
+        """
+        snapshots = db.query(IntentSnapshot).order_by(IntentSnapshot.composite_score.desc()).limit(10).all()
+        digest_items = []
+
+        for snap in snapshots:
+            c = db.query(Company).filter(Company.id == snap.company_id).first()
+            if c:
+                digest_items.append({
+                    "company_id": c.id,
+                    "canonical_name": c.canonical_name,
+                    "domain": c.domain,
+                    "industry": c.industry,
+                    "composite_score": snap.composite_score,
+                    "primary_label": snap.primary_label
+                })
+
+        return {
+            "digest_title": "📊 Resumen Semanal de Inteligencia Comercial & Cuentas Prioritarias",
+            "generated_at": datetime.datetime.utcnow().isoformat(),
+            "top_intent_accounts_count": len(digest_items),
+            "accounts": digest_items
         }

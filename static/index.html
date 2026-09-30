@@ -42,6 +42,29 @@
                 <i class="fa-solid fa-bell" style="color:var(--accent-amber);"></i> Alertas & Webhooks
             </button>
 
+            <!-- Unified Export & CRM Dropdown -->
+            <div class="dropdown" style="position: relative; display: inline-block;">
+                <button class="btn btn-outline" id="btn-export-crm-dropdown" onclick="toggleExportCrmDropdown()" title="Exportar CSV o Sincronizar con CRM">
+                    <i class="fa-solid fa-file-export" style="color:var(--accent-green);"></i> Exportar / CRM <i class="fa-solid fa-chevron-down" style="font-size:0.75rem; margin-left:4px;"></i>
+                </button>
+                <div id="export-crm-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 6px; background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1000; min-width: 220px; padding: 6px 0;">
+                    <a href="javascript:void(0)" onclick="exportWatchlistCSV(); hideExportCrmDropdown();" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: var(--text-main); font-size: 0.85rem; text-decoration: none;">
+                        <i class="fa-solid fa-file-csv" style="color:var(--accent-green); width: 16px;"></i> Exportar Lista a CSV
+                    </a>
+                    <div style="border-top: 1px solid var(--border-color); margin: 4px 0;"></div>
+                    <a href="javascript:void(0)" onclick="pushCompanyToCRM('hubspot'); hideExportCrmDropdown();" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: var(--text-main); font-size: 0.85rem; text-decoration: none;">
+                        <i class="fa-brands fa-hubspot" style="color:#ff7a59; width: 16px;"></i> Sincronizar en HubSpot
+                    </a>
+                    <a href="javascript:void(0)" onclick="pushCompanyToCRM('salesforce'); hideExportCrmDropdown();" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: var(--text-main); font-size: 0.85rem; text-decoration: none;">
+                        <i class="fa-solid fa-cloud" style="color:#00a1e0; width: 16px;"></i> Sincronizar en Salesforce
+                    </a>
+                </div>
+            </div>
+
+            <button class="btn btn-outline" onclick="openCompareCompaniesModal()" title="Comparar 2 o más empresas side-by-side">
+                <i class="fa-solid fa-code-compare" style="color:var(--brand-gold);"></i> Comparar
+            </button>
+
             <!-- Theme Toggle Button (Icon Only) -->
             <button class="btn btn-outline" id="theme-toggle-btn" title="Cambiar tema de color" style="padding: 7px 10px;">
                 <i class="fa-solid fa-sun" id="theme-icon"></i>
@@ -195,7 +218,11 @@
                                 </div>
                                 <h1 id="detail-company-name">Seleccione una empresa</h1>
                                 <span class="badge badge-industry" id="detail-company-industry">Empresa</span>
-                                
+                                <!-- Direct Dossier PDF Button Only -->
+                                <button class="btn btn-outline btn-sm" onclick="exportCompanyPDF()" title="Descargar Dossier PDF de la empresa" style="background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.4); color: #f87171; font-weight: 600; margin-left: 6px;">
+                                    <i class="fa-solid fa-file-pdf" style="color: #ef4444;"></i> Dossier PDF
+                                </button>
+
                                 <!-- Watchlist Dropdown -->
                                 <div class="watchlist-action-wrapper" style="position: relative; display: inline-block;">
                                     <button class="btn btn-outline btn-sm" id="btn-watchlist-dropdown" onclick="toggleWatchlistMenu()">
@@ -376,35 +403,24 @@
                                 <span class="badge badge-intent" id="playbook-window-tag">🔥 Ventana Abierta</span>
                             </div>
 
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-                                <!-- Left: Pain Points & Persona Target -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+                                <!-- Left: Pain Points -->
                                 <div>
-                                    <h4 style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                                    <h4 style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
                                         <i class="fa-solid fa-triangle-exclamation" style="color:var(--accent-amber);"></i> Puntos de Dolor Identificados (Pain Points)
                                     </h4>
-                                    <div id="playbook-pain-points" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;">
-                                        <!-- Injected dynamically -->
-                                    </div>
-
-                                    <h4 style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-                                        <i class="fa-solid fa-users-gear" style="color:var(--accent-cyan);"></i> Cargos Objetivo para Contactar (Buyer Personas)
-                                    </h4>
-                                    <div id="playbook-personas" style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div id="playbook-pain-points" style="display: flex; flex-direction: column; gap: 10px;">
                                         <!-- Injected dynamically -->
                                     </div>
                                 </div>
 
-                                <!-- Right: Tailored Cold Outreach Script -->
-                                <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
-                                    <div>
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                            <span style="font-size: 0.84rem; font-weight: 700; color: var(--brand-gold);"><i class="fa-solid fa-envelope-open-text"></i> Guion de Contacto Directo (Cold Outreach Pitch)</span>
-                                            <button class="btn btn-outline btn-sm" onclick="copyOutreachPitch()" style="padding: 4px 10px; font-size: 0.76rem;"><i class="fa-solid fa-copy"></i> Copiar</button>
-                                        </div>
-                                        <textarea id="playbook-pitch-text" style="width: 100%; height: 160px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); font-family: var(--font-code); font-size: 0.82rem; padding: 12px; line-height: 1.5; resize: none;" readonly></textarea>
-                                    </div>
-                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px;">
-                                        <i class="fa-solid fa-circle-info"></i> Generado dinámicamente según las señales de intención en vivo.
+                                <!-- Right: Buyer Personas -->
+                                <div>
+                                    <h4 style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-users-gear" style="color:var(--accent-cyan);"></i> Cargos Objetivo para Contactar (Buyer Personas)
+                                    </h4>
+                                    <div id="playbook-personas" style="display: flex; flex-direction: column; gap: 10px;">
+                                        <!-- Injected dynamically -->
                                     </div>
                                 </div>
                             </div>
@@ -1051,6 +1067,46 @@
                         <i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Side-by-Side Company Comparator Modal -->
+    <div class="modal-backdrop" id="compare-modal">
+        <div class="modal-box" style="max-width: 960px; width: 95%;">
+            <div class="modal-header">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--brand-gold);">
+                    <i class="fa-solid fa-code-compare"></i> Comparador de Empresas Side-by-Side
+                </h3>
+                <button class="modal-close" onclick="closeCompareModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding-top: 15px;">
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">
+                    Seleccione 2 o más empresas de su lista para comparar sus métricas de intención, salud financiera y vulnerabilidad comercial en paralelo.
+                </p>
+                <div id="compare-selector-container" style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <!-- Checkboxes injected dynamically by JS -->
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="runCompanyComparison()" style="background: var(--brand-gold); color: #ffffff;">
+                        <i class="fa-solid fa-chart-column"></i> Generar Comparativa Side-by-Side
+                    </button>
+                    <button class="btn btn-outline" onclick="resetCompareSelection()">
+                        <i class="fa-solid fa-rotate-left"></i> Limpiar Selección
+                    </button>
+                    <button class="btn btn-outline" onclick="closeCompareModal()">
+                        <i class="fa-solid fa-xmark"></i> Cerrar Ventana
+                    </button>
+                </div>
+                <div id="compare-results-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; max-height: 55vh; overflow-y: auto; padding-right: 4px;">
+                    <!-- Comparison columns injected dynamically by JS -->
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; padding: 12px 20px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.2);">
+                <button class="btn btn-outline" onclick="closeCompareModal()">
+                    Cerrar Comparador
+                </button>
+            </div>
             </div>
         </div>
     </div>

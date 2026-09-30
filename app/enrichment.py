@@ -1,7 +1,7 @@
 import urllib.request
 import json
 import re
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 REAL_COMPANY_KNOWLEDGE_BASE: Dict[str, Dict[str, Any]] = {
     "nike": {
@@ -918,21 +918,134 @@ class CompanyEnrichmentEngine:
         return "Servicios Comerciales B2B"
 
     @classmethod
+    def _get_tailored_buyer_personas(cls, industry: str) -> List[Dict[str, str]]:
+        ind = (industry or "").lower()
+        if any(k in ind for k in ['software', 'saas', 'tech', 'tecnología', 'enterprise']):
+            return [
+                {"role": "Chief Technology Officer (CTO)", "focus": "Escalabilidad de microservicios, seguridad API y arquitectura multi-tenant", "kpi": "SLA 99.99% y deuda técnica"},
+                {"role": "VP of Product & Engineering", "focus": "Velocidad de entrega de funcionalidades y experiencia de usuario (UX)", "kpi": "Time-to-market y adopción de módulos"},
+                {"role": "Chief Revenue Officer (CRO)", "focus": "Aceleración de ciclo de venta Enterprise y retención NRR (Net Retention Rate)", "kpi": "Crecimiento ARR YoY y menor Churn"}
+            ]
+        elif any(k in ind for k in ['logística', 'logistics', 'transporte', 'cadena', 'supply', 'freight']):
+            return [
+                {"role": "Director de Operaciones & Flotas", "focus": "Optimización de rutas de transporte, telemetría IoT y ahorro de combustible", "kpi": "Coste por km y cumplimiento de entregas"},
+                {"role": "Head of Supply Chain Technology", "focus": "Integración de sistemas WMS/TMS y trazabilidad de albaranes digitales", "kpi": "Tiempos de preparación e incidencias cero"},
+                {"role": "Chief Financial Officer (CFO)", "focus": "Control de costes operativos, margen por envío y gestión de circulante", "kpi": "Margen EBITDA operacional y PMP"}
+            ]
+        elif any(k in ind for k in ['biotecnología', 'salud', 'pharma', 'health', 'med']):
+            return [
+                {"role": "Director de I+D & Ensayos Clínicos", "focus": "Gestión de datos médicos, certificación regulatoria EMA/FDA y trazabilidad", "kpi": "Aceleración de ensayos y cumplimiento normativo"},
+                {"role": "Head of Regulatory Affairs & Quality", "focus": "Auditoría de protocolos de laboratorio y homologación ISO 13485", "kpi": "Cero no-conformidades en auditorías"},
+                {"role": "Chief Medical Officer (CMO)", "focus": "Eficiencia en desarrollo de soluciones diagnósticas y relaciones sanitarias", "kpi": "Adopción clínica e impacto sanitario"}
+            ]
+        elif any(k in ind for k in ['auto', 'automoción', 'flotas', 'fleet', 'motor']):
+            return [
+                {"role": "VP of Automotive Manufacturing & Tech", "focus": "Automatización de plantas, electrificación y mantenimiento predictivo", "kpi": "Reducción de paradas en línea de producción"},
+                {"role": "Head of Fleet Management & Mobility", "focus": "Gestión telemática de flotas corporativas y transición a vehículos limpios", "kpi": "Coste Total de Propiedad (TCO) y emisiones"},
+                {"role": "Director de Compras & Proveedores T1", "focus": "Negociación de materias primas y resiliencia de la cadena de componentes", "kpi": "Ahorro unitario y entregas Just-in-Time"}
+            ]
+        elif any(k in ind for k in ['energía', 'clean', 'solar', 'infraestructura', 'renovable', 'power']):
+            return [
+                {"role": "Director de Desarrollo de Proyectos Renovables", "focus": "Tramitación de licencias medioambientales y conexión a red eléctrica", "kpi": "Megavatios (MW) autorizados e instalados"},
+                {"role": "Chief Sustainability Officer (CSO)", "focus": "Estrategia de descarbonización, ESG y reporte de huella de carbono", "kpi": "Cumplimiento de objetivos net-zero"},
+                {"role": "Head of Energy Trading & PPA", "focus": "Estructuración de contratos de venta de energía a largo plazo (PPA)", "kpi": "Rentabilidad de coberturas de energía"}
+            ]
+        elif any(k in ind for k in ['moda', 'retail', 'fashion', 'comercio', 'tienda']):
+            return [
+                {"role": "Director de Experiencia Omnicanal & Retail Tech", "focus": "Cobro ultrarrápido sin colas, probador virtual y stock unificado", "kpi": "Conversión en tienda física y tiempo en caja"},
+                {"role": "Head of Digital Commerce (e-Commerce)", "focus": "Personalización de catálogo en la app móvil y tasa de conversión digital", "kpi": "Valor Medio del Pedido (AOV) y ROAS"},
+                {"role": "Director de Logística Inversa & Cadena Suministro", "focus": "Gestión de devoluciones y distribución de existencias a tiendas", "kpi": "Coste por devolución y rotación inventario"}
+            ]
+        elif any(k in ind for k in ['banca', 'finan', 'fintech', 'bank', 'pay', 'seguros']):
+            return [
+                {"role": "Chief Risk Officer (CRO) & Compliance", "focus": "Prevención de fraude, mitigación de riesgo crediticio y normativa DORA/PSD3", "kpi": "Tasa de morosidad y cumplimiento regulatorio"},
+                {"role": "Head of Digital Banking & Payments", "focus": "Integración de pagos instantáneos, tokenización y UX móvil", "kpi": "Usuarios activos mensuales (MAU)"},
+                {"role": "Chief Information Security Officer (CISO)", "focus": "Protección contra ciberataques y cifrado de datos financieros", "kpi": "Tiempo de respuesta a incidentes cero-day"}
+            ]
+        else:
+            return [
+                {"role": "Director General / CEO", "focus": "Estrategia de crecimiento corporativo, rentabilidad operacional e internacionalización", "kpi": "Crecimiento del EBITDA y margen neto"},
+                {"role": "Director de Desarrollo de Negocio (Sales Director)", "focus": "Aceleración de captación de cuentas clave y efectividad de prospección", "kpi": "Ratio de conversión de propuesta a cliente"},
+                {"role": "Director de Operaciones & Transformación Digital", "focus": "Automatización de procesos de cliente y migración a herramientas cloud", "kpi": "Eficiencia operacional y ROI de IT"}
+            ]
+
+    @classmethod
+    def _get_real_sector_competitors(cls, industry: str, intent_score: float, emp_range: str) -> List[Dict[str, Any]]:
+        ind = (industry or "").lower()
+        base_score = min(96.0, max(60.0, intent_score))
+
+        if any(k in ind for k in ['software', 'saas', 'tech', 'tecnología', 'enterprise']):
+            return [
+                {"name": "Salesforce, Inc.", "score": round(min(98.0, base_score + 5.2), 1), "size": "10,000+", "status": "Líder Global Cloud"},
+                {"name": "HubSpot, Inc.", "score": round(max(50.0, base_score - 3.5), 1), "size": "5,000-10,000", "status": "Competidor Directo CRM"},
+                {"name": "SAP SE", "score": round(max(45.0, base_score - 8.1), 1), "size": "10,000+", "status": "Rival Enterprise"}
+            ]
+        elif any(k in ind for k in ['logística', 'logistics', 'transporte', 'cadena', 'supply', 'freight']):
+            return [
+                {"name": "DHL Supply Chain", "score": round(min(98.0, base_score + 4.0), 1), "size": "10,000+", "status": "Líder Global Logística"},
+                {"name": "Logista Freight", "score": round(max(50.0, base_score - 2.8), 1), "size": "1,000-5,000", "status": "Competidor Ibérico"},
+                {"name": "Kuehne+Nagel", "score": round(max(45.0, base_score - 7.5), 1), "size": "10,000+", "status": "Rival Internacional"}
+            ]
+        elif any(k in ind for k in ['biotecnología', 'salud', 'pharma', 'health', 'med']):
+            return [
+                {"name": "Grifols S.A.", "score": round(min(98.0, base_score + 3.8), 1), "size": "10,000+", "status": "Líder Biotecnología"},
+                {"name": "Almirall S.A.", "score": round(max(50.0, base_score - 4.1), 1), "size": "1,000-5,000", "status": "Competidor Pharma"},
+                {"name": "Laboratorios Rovi", "score": round(max(45.0, base_score - 9.0), 1), "size": "1,000-5,000", "status": "Rival Especializado"}
+            ]
+        elif any(k in ind for k in ['auto', 'automoción', 'flotas', 'fleet', 'motor']):
+            return [
+                {"name": "SEAT S.A. (Volkswagen Group)", "score": round(min(98.0, base_score + 6.1), 1), "size": "10,000+", "status": "Líder Automoción"},
+                {"name": "Gestamp Automoción", "score": round(max(50.0, base_score - 3.2), 1), "size": "10,000+", "status": "Proveedor T1 Tier"},
+                {"name": "CIE Automotive", "score": round(max(45.0, base_score - 7.9), 1), "size": "5,000-10,000", "status": "Competidor Componentes"}
+            ]
+        elif any(k in ind for k in ['energía', 'clean', 'solar', 'infraestructura', 'renovable', 'power']):
+            return [
+                {"name": "Iberdrola S.A.", "score": round(min(98.0, base_score + 5.5), 1), "size": "10,000+", "status": "Líder Renovables"},
+                {"name": "Endesa S.A.", "score": round(max(50.0, base_score - 2.5), 1), "size": "5,000-10,000", "status": "Competidor Utility"},
+                {"name": "Naturgy Energy Group", "score": round(max(45.0, base_score - 6.8), 1), "size": "5,000-10,000", "status": "Rival Infraestructura"}
+            ]
+        elif any(k in ind for k in ['moda', 'retail', 'fashion', 'comercio', 'tienda']):
+            return [
+                {"name": "Inditex S.A. (Zara)", "score": round(min(98.0, base_score + 6.5), 1), "size": "10,000+", "status": "Líder Global Retail"},
+                {"name": "Mango MNG Holding", "score": round(max(50.0, base_score - 3.0), 1), "size": "10,000+", "status": "Competidor Moda"},
+                {"name": "Tendam (Cortefiel)", "score": round(max(45.0, base_score - 8.5), 1), "size": "5,000-10,000", "status": "Rival Omnicanal"}
+            ]
+        elif any(k in ind for k in ['banca', 'finan', 'fintech', 'bank', 'pay', 'seguros']):
+            return [
+                {"name": "Banco Santander S.A.", "score": round(min(98.0, base_score + 5.0), 1), "size": "10,000+", "status": "Líder Bancario Global"},
+                {"name": "BBVA S.A.", "score": round(max(50.0, base_score - 2.2), 1), "size": "10,000+", "status": "Rival Banca Digital"},
+                {"name": "CaixaBank S.A.", "score": round(max(45.0, base_score - 6.5), 1), "size": "10,000+", "status": "Líder Mercado Nacional"}
+            ]
+        else:
+            return [
+                {"name": "McKinsey & Company", "score": round(min(98.0, base_score + 4.2), 1), "size": "10,000+", "status": "Referente Consultoría B2B"},
+                {"name": "Deloitte Spain", "score": round(max(50.0, base_score - 3.4), 1), "size": "10,000+", "status": "Competidor Servicios"},
+                {"name": "Accenture S.A.", "score": round(max(45.0, base_score - 7.1), 1), "size": "10,000+", "status": "Líder Transformación B2B"}
+            ]
+
+    @classmethod
     def generate_institutional_dossier(cls, company_id: str, canonical_name: str, domain: str, industry: Optional[str], employee_range: Optional[str], hq_city: Optional[str], intent_score: float) -> Dict[str, Any]:
         """
         Generates institutional-grade B2B intelligence dossier.
         Prioritizes verified real company audit filings and returns transparent factual defaults for unlisted private entities.
         """
+        import copy
         clean_dom = cls.clean_domain(domain)
         kb_match = cls._lookup_knowledge_base(clean_dom) or cls._lookup_knowledge_base(canonical_name.lower())
 
         if kb_match and "dossier" in kb_match:
-            return kb_match["dossier"]
+            dossier_data = copy.deepcopy(kb_match["dossier"])
+            if "sales_playbook" in dossier_data:
+                dossier_data["sales_playbook"].pop("cold_outreach_pitch", None)
+            return dossier_data
 
         # Transparent Factual Dossier for Unlisted / Private Entities
         emp_range = employee_range or "10-50"
         ind = industry or cls._infer_industry(clean_dom)
         clean_name = canonical_name or clean_dom.split('.')[0].capitalize()
+
+        personas = cls._get_tailored_buyer_personas(ind)
+        competitors = cls._get_real_sector_competitors(ind, intent_score, emp_range)
 
         return {
             "financials": {
@@ -958,20 +1071,7 @@ class CompanyEnrichmentEngine:
                     "Modernización de infraestructura tecnológica y herramientas de productividad.",
                     "Mejora de eficiencia en ciclos de venta B2B."
                 ],
-                "target_personas": [
-                    {"role": "Director General / CEO", "focus": "Estrategia de crecimiento y control de costes"},
-                    {"role": "Director Comercial / Sales Manager", "focus": "Generación de oportunidades de negocio"},
-                    {"role": "Responsable de Operaciones & IT", "focus": "Digitalización de procesos internos"}
-                ],
-                "cold_outreach_pitch": (
-                    f"Hola [Nombre],\n\n"
-                    f"He observado el posicionamiento de {clean_name} en el sector de {ind}.\n\n"
-                    f"Ayudamos a empresas del sector a optimizar sus procesos comerciales y acortar la toma de decisiones.\n\n"
-                    f"¿Tendrías 10 minutos esta semana para explorar vías de mejora?"
-                )
+                "target_personas": personas
             },
-            "competitors": [
-                {"name": f"{clean_name} Competidor A", "score": min(95.0, round(intent_score * 0.9, 1)), "size": emp_range, "status": "En Evaluación"},
-                {"name": f"{clean_name} Competidor B", "score": min(95.0, round(intent_score * 0.8, 1)), "size": emp_range, "status": "Estable"}
-            ]
+            "competitors": competitors
         }

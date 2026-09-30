@@ -204,5 +204,15 @@ class AnalyzeOnDemandRequest(BaseModel):
     query: str = Field(..., description="Company name, domain, CIF/NIF, or keyword to analyze on-demand")
 
 
+class CRMPushRequest(BaseModel):
+    company_id: str
+    crm_provider: str = "hubspot"
+    target_email: Optional[str] = None
+
+
+class CompanyCompareRequest(BaseModel):
+    company_ids: List[str]
+
+
 
 

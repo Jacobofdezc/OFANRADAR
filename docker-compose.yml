@@ -1,26 +1,31 @@
 version: '3.8'
 
 services:
-  business-radar:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: business-radar-terminal
+  web:
+    build: .
+    container_name: ofanradar_web
     ports:
       - "8000:8000"
     environment:
+      - DATABASE_URL=postgresql://radar_user:radar_password@postgres:5432/radar_db
       - ENVIRONMENT=production
-      - JWT_SECRET_KEY=business-radar-institutional-production-secret-2026
-      - DATABASE_URL=sqlite:////app/radar.db
+      - JWT_SECRET=radar-prod-super-secret-key-2026
+    depends_on:
+      - postgres
+    restart: always
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: ofanradar_postgres
+    environment:
+      - POSTGRES_USER=radar_user
+      - POSTGRES_PASSWORD=radar_password
+      - POSTGRES_DB=radar_db
+    ports:
+      - "5432:5432"
     volumes:
-      - radar-data:/app/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
 
 volumes:
-  radar-data:
-    driver: local
+  postgres_data:

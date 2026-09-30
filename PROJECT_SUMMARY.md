@@ -96,15 +96,22 @@ Permite a directores comerciales, analistas de Private Equity y equipos de banca
 * **Páginas Legales (Feature 22):** Rutas estáticas `/terms` y `/privacy` con plantillas SaaS B2B de Términos de Servicio y Política de Privacidad.
 * **Telemetría Respetuosa:** Tracker ligero de cliente `static/js/analytics.js` y servicio `app/analytics.py` con endpoints `/v1/analytics/event` y `/v1/analytics/summary` para la medición de eventos de conversión (`export_csv_click`, `add_to_watchlist_click`, `start_trial_click`).
 
+#### 🤝 **M. Sincronización CRM Enterprise & Exportación de Dossier PDF (Bloque 13 a 15 - V6)**
+* **Integración CRM (Feature 23):** Módulo `app/crm_integration.py` con conectores directos para **HubSpot CRM** (Mapeo a Objetos Company & Deal) y **Salesforce Sales Cloud** (Mapeo a Objetos Account & Opportunity). Permite enviar prospectos con Intent Score directamente al pipeline de ventas.
+* **Motor de Exportación de Dossiers PDF (Feature 24):** Módulo `app/export_engine.py` con generación de CSVs detallados y vista HTML imprimible/A4 tipo PDF listo para reuniones institucionales (`/v1/companies/{id}/export-pdf`).
+* **Encolamiento Asíncrono de Scraping & AI Diffing (Feature 25):** Módulo `app/tasks.py` y endpoint `/v1/tasks/enqueue-scrape` (HTTP 202 Accepted) que evita timeouts en entornos serverless ejecuntando tareas pesadas en segundo plano.
+* **Páginas SEO Dinámicas & Blur Paywall (Feature 26):** Endpoint `/empresa/{slug_or_domain}` que renderiza páginas optimizadas para buscadores con OpenGraph, Twitter Cards, Schema.org JSON-LD y un paywall con efecto cristal difuminado sobre señales en vivo para captación PLG.
+
 ---
 
-### 4. 🗺️ **Estado del Roadmap V5 (Go-to-Market, Pagos y Onboarding)**
+### 4. 🗺️ **Estado del Roadmap (V1 a V6)**
 
 | Bloque | Descripción | Estado |
 | :--- | :--- | :--- |
 | **Bloque 10** | **El Escaparate y la Experiencia de Prueba (PLG)** (Landing Page en `/`, Dashboard en `/app`, 7-Day Trial, Paywall Anti-Trampas) | `[x] COMPLETADO` |
 | **Bloque 11** | **Sistema de Pagos (Stripe Integration)** (Checkout Session, Webhook `checkout.session.completed`, Customer Portal, Sandbox Mode) | `[x] COMPLETADO` |
 | **Bloque 12** | **Legal y Analítica Básica** (Páginas `/terms`, `/privacy`, Script de analítica respetuoso) | `[x] COMPLETADO` |
+| **Bloque 13-15** | **Integraciones CRM, Dossiers PDF, Encolamiento Asíncrono y Páginas SEO** (HubSpot, Salesforce, HTML-to-PDF Dossier, Background Tasks, `/empresa/{slug}`) | `[x] COMPLETADO` |
 
 
 

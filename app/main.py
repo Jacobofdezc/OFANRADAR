@@ -1,7 +1,7 @@
 import datetime
 import os
 from typing import List, Optional
-from fastapi import FastAPI, Depends, HTTPException, Query, status, Request
+from fastapi import FastAPI, Depends, HTTPException, Query, status, Request, Body
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,7 +28,9 @@ from app.schemas import (
     AlertSubscriptionRequest,
     AlertSubscriptionResponse,
     AlertTestTriggerRequest,
-    AnalyzeOnDemandRequest
+    AnalyzeOnDemandRequest,
+    CRMPushRequest,
+    CompanyCompareRequest
 )
 from app.scoring import compute_intent_for_signals, compute_30day_sparkline_history
 from app.entity_resolution import resolve_canonical_company
@@ -503,6 +505,92 @@ def _build_company_response(company: Company, user: Optional[User], db: Session)
         is_locked=not has_sub,
         created_at=company.created_at
     )
+
+
+# Static routes placed BEFORE dynamic /{company_id} path parameter to prevent route collision
+@app.get("/v1/companies/export-csv")
+def export_companies_csv_get(db: Session = Depends(get_db)):
+    """
+    Exports all active company records to CSV downloadable format.
+    """
+    from fastapi.responses import Response
+    from app.export_engine import ExportEngine
+
+    companies = db.query(Company).filter(Company.is_active == True).limit(200).all()
+    comps_data = [_build_company_response(c, None, db).dict() for c in companies]
+
+    csv_content = ExportEngine.generate_company_csv(comps_data)
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=business_radar_export.csv"}
+    )
+
+
+@app.post("/v1/companies/export-csv")
+def export_companies_csv_post(payload: Optional[CompanyQueryRequest] = None, db: Session = Depends(get_db)):
+    """
+    Exports filtered company records to CSV downloadable format.
+    """
+    from fastapi.responses import Response
+    from app.export_engine import ExportEngine
+
+    companies = db.query(Company).filter(Company.is_active == True)
+    if payload:
+        if payload.industry:
+            companies = companies.filter(Company.industry.ilike(f"%{payload.industry}%"))
+        if payload.country:
+            companies = companies.filter(Company.hq_country == payload.country)
+
+    comp_list = companies.limit(payload.limit if payload and payload.limit else 200).all()
+    comps_data = [_build_company_response(c, None, db).dict() for c in comp_list]
+
+    csv_content = ExportEngine.generate_company_csv(comps_data)
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=business_radar_export.csv"}
+    )
+
+
+@app.post("/v1/companies/compare")
+def compare_companies_endpoint(req: CompanyCompareRequest, db: Session = Depends(get_db)):
+    """
+    Returns side-by-side metric comparison for 2-3 company IDs.
+    """
+    from app.enrichment import CompanyEnrichmentEngine
+    if not req.company_ids or len(req.company_ids) < 2:
+        raise HTTPException(status_code=400, detail="Por favor seleccione al menos 2 empresas para comparar.")
+
+    comparison_results = []
+    for cid in req.company_ids[:4]:
+        comp = resolve_canonical_company(db, cid)
+        if comp:
+            signals = db.query(Signal).filter(Signal.company_id == comp.id).all()
+            scores, composite, label, attribution, summary, action = compute_intent_for_signals(signals, window_days=90)
+            dossier = CompanyEnrichmentEngine.generate_institutional_dossier(
+                comp.id, comp.canonical_name, comp.domain, comp.industry, comp.employee_range, comp.hq_city, composite
+            )
+
+            comparison_results.append({
+                "id": comp.id,
+                "canonical_name": comp.canonical_name,
+                "domain": comp.domain,
+                "logo_url": comp.logo_url or f"https://logo.clearbit.com/{comp.domain}",
+                "industry": comp.industry,
+                "employee_range": comp.employee_range,
+                "hq_city": comp.hq_city,
+                "composite_score": round(composite, 1),
+                "primary_label": label,
+                "intent_vector": scores,
+                "financials": dossier.get("financials", {}),
+                "sales_playbook": dossier.get("sales_playbook", {})
+            })
+
+    return {
+        "comparison_count": len(comparison_results),
+        "companies": comparison_results
+    }
 
 
 @app.get("/v1/companies/{company_id}", response_model=CompanyResponse)
@@ -1730,6 +1818,122 @@ def get_public_company_api_data(slug_or_domain: str, db: Session = Depends(get_d
         "primary_label": latest_snap.primary_label if latest_snap else "Sin datos",
         "is_blur_paywalled": True,
         "cta_message": "Regístrate gratis en OFANRADAR para desbloquear las señales en vivo y el resumen ejecutivo de IA."
+    }
+
+
+# ==========================================
+# BLOQUE 15: PDF/CSV EXPORTS, CRM PUSH, SLACK/TEAMS DIGEST & COMPARATOR
+# ==========================================
+
+
+@app.get("/v1/companies/{company_id}/export-pdf")
+def export_company_pdf_dossier(company_id: str, db: Session = Depends(get_db)):
+    """
+    Generates a print-ready HTML/PDF Executive Dossier for the given company.
+    """
+    from fastapi.responses import HTMLResponse
+    from app.export_engine import ExportEngine
+    from app.enrichment import CompanyEnrichmentEngine
+
+    company = resolve_canonical_company(db, company_id)
+    if not company:
+        raise HTTPException(status_code=404, detail="Empresa no encontrada.")
+
+    comp_resp = _build_company_response(company, None, db)
+
+    signals = db.query(Signal).filter(Signal.company_id == company.id).all()
+    scores, composite, label, attribution, summary, action = compute_intent_for_signals(signals, window_days=90)
+    dossier = CompanyEnrichmentEngine.generate_institutional_dossier(
+        company.id, company.canonical_name, company.domain, company.industry, company.employee_range, company.hq_city, composite
+    )
+
+    intent_data = {
+        "intent_scores": {
+            "composite_score": composite,
+            "growth_intent": scores["growth_intent"],
+            "hiring_intent": scores["hiring_intent"],
+            "expansion_intent": scores["expansion_intent"],
+            "technology_change_intent": scores["technology_change_intent"],
+            "financial_stress": scores["financial_stress"]
+        },
+        "primary_label": label,
+        "business_summary": summary,
+        "recommended_action": action,
+        "institutional_dossier": dossier
+    }
+
+    html_report = ExportEngine.generate_html_dossier_pdf_view(comp_resp.dict(), intent_data)
+    return HTMLResponse(content=html_report)
+
+
+
+@app.post("/v1/crm/push-lead")
+def push_lead_to_crm(req: CRMPushRequest, db: Session = Depends(get_db)):
+    """
+    Pushes company intent profile and sales pitch directly to HubSpot or Salesforce CRM.
+    """
+    from app.crm_integration import CRMIntegrationEngine
+    company = resolve_canonical_company(db, req.company_id)
+    if not company:
+        raise HTTPException(status_code=404, detail="Empresa no encontrada.")
+
+    comp_dict = _build_company_response(company, None, db).dict()
+    provider = req.crm_provider.lower().strip()
+
+    if "salesforce" in provider:
+        res = CRMIntegrationEngine.push_to_salesforce(comp_dict, comp_dict.get("latest_intent"))
+    else:
+        res = CRMIntegrationEngine.push_to_hubspot(comp_dict, comp_dict.get("latest_intent"), req.target_email)
+
+    return res
+
+
+@app.get("/v1/alerts/weekly-digest")
+def get_weekly_digest_endpoint(db: Session = Depends(get_db)):
+    """
+    Generates weekly top intent account digest.
+    """
+    from app.alert_dispatcher import AlertDispatcherEngine
+    return AlertDispatcherEngine.generate_weekly_digest(db)
+
+
+@app.post("/v1/companies/compare")
+def compare_companies_endpoint(req: CompanyCompareRequest, db: Session = Depends(get_db)):
+    """
+    Returns side-by-side metric comparison for 2-3 company IDs.
+    """
+    from app.enrichment import CompanyEnrichmentEngine
+    if not req.company_ids or len(req.company_ids) < 2:
+        raise HTTPException(status_code=400, detail="Por favor seleccione al menos 2 empresas para comparar.")
+
+    comparison_results = []
+    for cid in req.company_ids[:4]:
+        comp = resolve_canonical_company(db, cid)
+        if comp:
+            signals = db.query(Signal).filter(Signal.company_id == comp.id).all()
+            scores, composite, label, attribution, summary, action = compute_intent_for_signals(signals, window_days=90)
+            dossier = CompanyEnrichmentEngine.generate_institutional_dossier(
+                comp.id, comp.canonical_name, comp.domain, comp.industry, comp.employee_range, comp.hq_city, composite
+            )
+
+            comparison_results.append({
+                "id": comp.id,
+                "canonical_name": comp.canonical_name,
+                "domain": comp.domain,
+                "logo_url": comp.logo_url or f"https://logo.clearbit.com/{comp.domain}",
+                "industry": comp.industry,
+                "employee_range": comp.employee_range,
+                "hq_city": comp.hq_city,
+                "composite_score": round(composite, 1),
+                "primary_label": label,
+                "intent_vector": scores,
+                "financials": dossier.get("financials", {}),
+                "sales_playbook": dossier.get("sales_playbook", {})
+            })
+
+    return {
+        "comparison_count": len(comparison_results),
+        "companies": comparison_results
     }
 
 

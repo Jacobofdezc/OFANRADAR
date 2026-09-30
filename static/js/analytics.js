@@ -19,7 +19,8 @@
                 };
 
                 if (navigator.sendBeacon) {
-                    navigator.sendBeacon('/v1/analytics/event', JSON.stringify(payload));
+                    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+                    navigator.sendBeacon('/v1/analytics/event', blob);
                 } else {
                     fetch('/v1/analytics/event', {
                         method: 'POST',

@@ -2436,3 +2436,227 @@ async function handleGlobalOnDemandSubmit(queryOverride) {
 }
 
 
+// ==========================================
+// BLOQUE 15: PDF EXPORT, CSV EXPORT, CRM PUSH & COMPANY COMPARATOR
+// ==========================================
+
+function toggleCrmMenu() {
+    const popover = document.getElementById('crm-menu-popover');
+    if (popover) {
+        popover.classList.toggle('hidden');
+    }
+}
+
+function exportCompanyPDF() {
+    if (!currentCompanyId) {
+        alert('Por favor seleccione una empresa primero en el directorio para descargar su Dossier PDF.');
+        return;
+    }
+    const pdfUrl = `/v1/companies/${currentCompanyId}/export-pdf`;
+    window.open(pdfUrl, '_blank');
+}
+
+async function exportWatchlistCSV() {
+    try {
+        const resp = await authFetch('/v1/companies/export-csv', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ limit: 200 })
+        });
+        if (resp.ok) {
+            const blob = await resp.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = `business_radar_export_${Date.now()}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        } else {
+            alert('Error al generar la exportación CSV.');
+        }
+    } catch (e) {
+        console.error('Error export CSV:', e);
+        alert('Error de conexión al exportar datos a CSV.');
+    }
+}
+
+function toggleExportCrmDropdown() {
+    const menu = document.getElementById('export-crm-dropdown-menu');
+    if (!menu) return;
+    menu.style.display = (menu.style.display === 'none' || !menu.style.display) ? 'block' : 'none';
+}
+
+function hideExportCrmDropdown() {
+    const menu = document.getElementById('export-crm-dropdown-menu');
+    if (menu) menu.style.display = 'none';
+}
+
+document.addEventListener('click', function(e) {
+    const container = document.getElementById('btn-export-crm-dropdown');
+    const menu = document.getElementById('export-crm-dropdown-menu');
+    if (menu && container && !container.contains(e.target) && !menu.contains(e.target)) {
+        menu.style.display = 'none';
+    }
+});
+
+
+async function pushCompanyToCRM(provider) {
+    if (!currentCompanyId) {
+        alert('Por favor seleccione una empresa primero en la lista.');
+        return;
+    }
+    const crmName = provider === 'salesforce' ? 'Salesforce Sales Cloud' : 'HubSpot CRM';
+    try {
+        const resp = await authFetch('/v1/crm/push-lead', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                company_id: currentCompanyId,
+                crm_provider: provider
+            })
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+            alert(`✅ ${data.message || `Lead enviado con éxito a ${crmName}`}`);
+        } else {
+            alert(`Fallo en sincronización CRM: ${data.detail || 'Error en conector'}`);
+        }
+    } catch (e) {
+        console.error('CRM Push error:', e);
+        alert(`Error al conectar con ${crmName}.`);
+    }
+}
+
+async function openCompareCompaniesModal() {
+    const modal = document.getElementById('compare-modal');
+    const container = document.getElementById('compare-selector-container');
+    if (!modal || !container) return;
+
+    try {
+        const resp = await authFetch('/v1/companies/query', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ limit: 50 })
+        });
+        const companies = await resp.json();
+        if (!Array.isArray(companies) || companies.length < 2) {
+            alert('Se necesitan al menos 2 empresas en la base de datos para comparar.');
+            return;
+        }
+
+        const activeId = (typeof currentCompanyId !== 'undefined') ? currentCompanyId : null;
+        container.innerHTML = companies.map(c => `
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-main); cursor: pointer; background: rgba(255,255,255,0.04); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+                <input type="checkbox" class="compare-company-checkbox" value="${c.id}" ${activeId === c.id ? 'checked' : ''}>
+                <span><strong>${escapeHtml(c.canonical_name)}</strong> <small style="color:var(--text-muted);">(${escapeHtml(c.domain)})</small></span>
+            </label>
+        `).join('');
+
+        modal.classList.add('open');
+        modal.style.display = 'flex';
+
+        // Backdrop click to close
+        modal.onclick = function(e) {
+            if (e.target === modal) closeCompareModal();
+        };
+
+        // If at least 2 are checked, auto run initial comparison
+        const checkedCount = container.querySelectorAll('.compare-company-checkbox:checked').length;
+        if (checkedCount >= 2) {
+            runCompanyComparison();
+        }
+    } catch (err) {
+        console.error('Error opening compare modal:', err);
+        alert('Error al obtener la lista de empresas para la comparativa.');
+    }
+}
+
+function closeCompareModal() {
+    const modal = document.getElementById('compare-modal');
+    if (modal) {
+        modal.classList.remove('open');
+        modal.style.display = 'none';
+    }
+}
+
+function resetCompareSelection() {
+    const checkboxes = document.querySelectorAll('.compare-company-checkbox');
+    checkboxes.forEach(cb => cb.checked = false);
+    const grid = document.getElementById('compare-results-grid');
+    if (grid) grid.innerHTML = '';
+}
+
+async function runCompanyComparison() {
+    const checkboxes = document.querySelectorAll('.compare-company-checkbox:checked');
+    const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+
+    if (selectedIds.length < 2) {
+        alert('Por favor seleccione al menos 2 empresas para realizar la comparativa.');
+        return;
+    }
+
+    const grid = document.getElementById('compare-results-grid');
+    if (grid) {
+        grid.innerHTML = '<div style="color: var(--text-muted); font-size: 0.9rem; grid-column: 1/-1; text-align: center; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Generando comparativa side-by-side...</div>';
+    }
+
+    try {
+        const resp = await authFetch('/v1/companies/compare', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ company_ids: selectedIds })
+        });
+        const data = await resp.json();
+        if (resp.ok && data.companies) {
+            renderComparisonGrid(data.companies);
+        } else {
+            alert(`Error: ${data.detail || 'Fallo al comparar empresas'}`);
+        }
+    } catch (e) {
+        console.error('Error in compare:', e);
+        alert('Error de conexión al obtener la comparativa.');
+    }
+}
+
+function renderComparisonGrid(companies) {
+    const grid = document.getElementById('compare-results-grid');
+    if (!grid) return;
+
+    grid.innerHTML = companies.map(c => {
+        const fin = c.financials || {};
+        const vec = c.intent_vector || {};
+        return `
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                    <img src="${c.logo_url}" style="width: 38px; height: 38px; border-radius: 6px; object-fit: contain; background: #fff;" onerror="this.src='https://via.placeholder.com/38'">
+                    <div>
+                        <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0;">${escapeHtml(c.canonical_name)}</h4>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(c.domain)}</span>
+                    </div>
+                </div>
+
+                <div style="text-align: center; background: rgba(0, 229, 255, 0.05); padding: 10px; border-radius: 8px; border: 1px solid rgba(0, 229, 255, 0.2);">
+                    <div style="font-size: 1.4rem; font-weight: 800; color: var(--brand-gold);">${c.composite_score} / 100</div>
+                    <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">${escapeHtml(c.primary_label)}</div>
+                </div>
+
+                <div style="font-size: 0.8rem; line-height: 1.6;">
+                    <div><strong>Sector:</strong> ${escapeHtml(c.industry)}</div>
+                    <div><strong>Plantilla:</strong> ${escapeHtml(c.employee_range)}</div>
+                    <div><strong>ARR Est.:</strong> ${escapeHtml(fin.arr_estimate || 'N/A')}</div>
+                    <div><strong>Crecimiento:</strong> ${escapeHtml(fin.yoy_growth || 'N/A')}</div>
+                    <div><strong>Solvencia:</strong> ${escapeHtml(fin.solvency_risk || 'N/A')}</div>
+                </div>
+
+                <div style="border-top: 1px dashed var(--border-color); padding-top: 8px; font-size: 0.78rem; color: var(--text-muted);">
+                    <div>Expansión: <strong>${vec.expansion_intent || 0}</strong> | Empleo: <strong>${vec.hiring_intent || 0}</strong></div>
+                    <div>Tech: <strong>${vec.technology_change_intent || 0}</strong> | Estrés: <strong>${vec.financial_stress || 0}</strong></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+
+
